@@ -1,5 +1,5 @@
 import axios from 'axios';
-import cheerio from 'cheerio';
+import cheerio, { CheerioAPI } from 'cheerio';
 import { csvParse } from 'd3-dsv';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -22,13 +22,30 @@ async function fetchPageData(URI: string) {
   return $;
 }
 
+async function parsePageData($: CheerioAPI, firstPage = true) {
+  const pages = $('center p a');
+  if (pages.length > 2 && firstPage) {
+    const URIs = [...new Set(pages.map((i, el) => $(el).attr('href')))];
+    URIs.splice(URIs.findIndex(text => text.includes('CPage=0')));
+    console.log(URIs);
+    const allParsedPages: string[][] = await Promise.all(
+      URIs.map(async URI => {
+        const $$ = await fetchPageData(URI);
+        return parsePageData($$, false);
+      }),
+    );
+    return allParsedPages.flat();
+  }
+  return $('.searchResultDetailRow td:nth-of-type(3) span:nth-of-type(2)')
+    .map((i, el) => $(el).text())
+    .toArray();
+}
+
 async function getAccountNumbers(streetAddresses: Address[]) {
   return await Promise.all(
     streetAddresses.map(async address => {
       const $ = await fetchPageData(getPropertyURI(address));
-      return $(
-        '.searchResultDetailRow td:nth-of-type(3) span:nth-of-type(2)',
-      ).text();
+      return parsePageData($);
     }),
   );
 }
@@ -37,7 +54,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 fs.readFile(
-  path.join(__dirname, '../../../data/Address_Points.csv'),
+  path.join(__dirname, '../../../data/test.csv'),
   'utf-8',
   async (err, data) => {
     if (err) console.error(err);
