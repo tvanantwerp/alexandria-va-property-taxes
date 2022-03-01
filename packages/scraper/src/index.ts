@@ -16,13 +16,16 @@ function getPropertyURI({ streetNumber, streetName }: Address) {
   return `${BASE_URL}index.php?StreetNumber=${streetNumber}&StreetName=${streetName}&UnitNo=&Search=Search`;
 }
 
+async function fetchPageData(URI: string) {
+  const HTMLData = await axios.get(URI);
+  const $ = cheerio.load(HTMLData.data);
+  return $;
+}
+
 async function getAccountNumbers(streetAddresses: Address[]) {
   return await Promise.all(
-    streetAddresses.map(async ({ streetNumber, streetName }) => {
-      const HTMLData = await axios.get(
-        getPropertyURI({ streetNumber, streetName }),
-      );
-      const $ = cheerio.load(HTMLData.data);
+    streetAddresses.map(async address => {
+      const $ = await fetchPageData(getPropertyURI(address));
       return $(
         '.searchResultDetailRow td:nth-of-type(3) span:nth-of-type(2)',
       ).text();
