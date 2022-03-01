@@ -1,7 +1,7 @@
 export const streets = [
   { streetName: 'S^28TH^ST' },
-  // { streetName: 'S^29TH^RD' },
-  // { streetName: 'S^30TH^ST' },
+  { streetName: 'S^29TH^RD' },
+  { streetName: 'S^30TH^ST' },
   // { streetName: 'E^ABINGDON^DR' },
   // { streetName: 'W^ABINGDON^DR' },
   // { streetName: 'W^ABINGDON^CT' },

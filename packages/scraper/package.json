@@ -5,6 +5,7 @@
   "private": true,
   "license": "MIT",
   "dependencies": {
+    "@types/jsdom": "^16.2.14",
     "axios": "^0.26.0",
     "jsdom": "^19.0.0",
     "ts-node": "^10.5.0"

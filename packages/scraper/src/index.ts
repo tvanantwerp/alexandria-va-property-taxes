@@ -1,7 +1,5 @@
 import axios from 'axios';
-import * as fs from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
+import { JSDOM } from 'jsdom';
 
 import { streets } from './streets';
 
@@ -18,23 +16,51 @@ function getPropertyURI({ streetNumber, streetName }: Address) {
 
 async function fetchPageData(URI: string) {
   const HTMLData = await axios.get(URI);
-  return HTMLData.data;
+  const dom = new JSDOM(HTMLData.data);
+  return dom.window.document;
 }
 
-async function parsePageData(data: string, firstPage = true) {
-  // select pages with 'center p a
-  // if (pages.length > 2 && firstPage) {
-  //create URI array, then call fetchPageData for them
-  // }
-  //return parsed data on account
-  return 'hi';
+async function parsePageData(
+  data: Document,
+  firstPage = true,
+): Promise<string[]> {
+  const pageLinks: HTMLAnchorElement[] = Array.from(
+    data.querySelectorAll('center p a'),
+  );
+  if (pageLinks.length > 2 && firstPage) {
+    let pages: string[] = [];
+    pageLinks.forEach(link => {
+      const href = link.href;
+      if (!pages.includes(href)) {
+        pages.push(href);
+      }
+    });
+    pages = pages
+      .filter(link => !link.includes('&CPage=0') && !link.includes('%5'))
+      .sort();
+
+    const allPages = await Promise.all(
+      pages.map(async page => {
+        const rawData = await fetchPageData(`${BASE_URL}${page}`);
+        return parsePageData(rawData, false);
+      }),
+    );
+
+    return allPages.flat();
+  }
+
+  return Array.from(
+    data.querySelectorAll(
+      '.searchResultDetailRow > td:nth-child(3) > span:nth-child(2)',
+    ),
+  ).map(el => el.innerHTML);
 }
 
-async function getAccountNumbers(streetAddresses: Address[]) {
+async function getAccountNumbers(streets: Address[]) {
   return await Promise.all(
-    streetAddresses.map(async address => {
-      const $ = await fetchPageData(getPropertyURI(address));
-      return parsePageData($);
+    streets.map(async street => {
+      const rawData = await fetchPageData(getPropertyURI(street));
+      return parsePageData(rawData);
     }),
   );
 }
@@ -43,3 +69,5 @@ async function getData() {
   const accounts = await getAccountNumbers(streets);
   console.log(accounts);
 }
+
+getData();
