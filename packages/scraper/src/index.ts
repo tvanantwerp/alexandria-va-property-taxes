@@ -1,73 +1,78 @@
-import axios from 'axios';
-import { JSDOM } from 'jsdom';
+import { writeFile } from 'fs';
+import { resolve } from 'path';
 
-import { streets } from './streets';
+import { getData } from './accounts';
+import { BASE_URL, fetchPageData } from './util';
 
-interface Address {
-  streetNumber?: number;
-  streetName: string;
+interface Assessment {
+  date: string;
+  land: string;
+  building: string;
+  total: string;
 }
 
-const BASE_URL = 'https://realestate.alexandriava.gov/';
-
-function getPropertyURI({ streetNumber, streetName }: Address) {
-  return `${BASE_URL}index.php?StreetNumber=${streetNumber}&StreetName=${streetName}&UnitNo=&Search=Search`;
-}
-
-async function fetchPageData(URI: string) {
-  const HTMLData = await axios.get(URI);
-  const dom = new JSDOM(HTMLData.data);
-  return dom.window.document;
-}
-
-async function parsePageData(
-  data: Document,
-  firstPage = true,
-): Promise<string[]> {
-  const pageLinks: HTMLAnchorElement[] = Array.from(
-    data.querySelectorAll('center p a'),
-  );
-  if (pageLinks.length > 2 && firstPage) {
-    let pages: string[] = [];
-    pageLinks.forEach(link => {
-      const href = link.href;
-      if (!pages.includes(href)) {
-        pages.push(href);
-      }
-    });
-    pages = pages
-      .filter(link => !link.includes('&CPage=0') && !link.includes('%5'))
-      .sort();
-
-    const allPages = await Promise.all(
-      pages.map(async page => {
-        const rawData = await fetchPageData(`${BASE_URL}${page}`);
-        return parsePageData(rawData, false);
-      }),
-    );
-
-    return allPages.flat();
-  }
-
-  return Array.from(
-    data.querySelectorAll(
-      '.searchResultDetailRow > td:nth-child(3) > span:nth-child(2)',
-    ),
-  ).map(el => el.innerHTML);
-}
-
-async function getAccountNumbers(streets: Address[]) {
+async function getProperties(accounts: string[]) {
   return await Promise.all(
-    streets.map(async street => {
-      const rawData = await fetchPageData(getPropertyURI(street));
-      return parsePageData(rawData);
+    accounts.map(async account => {
+      const page = await fetchPageData(
+        `${BASE_URL}detail.php?accountno=${account}`,
+      );
+      const address = page
+        .querySelector('h3.notranslate')
+        .innerHTML.replace('\t\t\t\t\t\t\t  \n', '');
+      const type = page
+        .querySelector(
+          '#coa_rea_main > table:nth-child(8) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > span:nth-child(5)',
+        )
+        .innerHTML.replace(/(\n|\t|\r)/g, '');
+      const description = page
+        .querySelector('div.data:nth-child(9)')
+        .innerHTML.replace(/(\n|\t|\r)/g, '');
+      const assessments = await parseAssessmentData(page);
+
+      return {
+        address,
+        type,
+        description,
+        assessments,
+      };
     }),
   );
 }
 
-async function getData() {
-  const accounts = await getAccountNumbers(streets);
-  console.log(accounts);
+async function parseAssessmentData(data: Document) {
+  const assessments: Assessment[] = [];
+  const rows = Array.from(
+    data.querySelector(
+      '#coa_rea_main > table:nth-child(17) > tbody:nth-child(1)',
+    ).children,
+  );
+  for (let i = 0; i < rows.length; i++) {
+    if (i === 0) continue;
+    const row = rows[i].children;
+    assessments.push({
+      date:
+        i === 1
+          ? row[0].querySelector('a').innerHTML.replace(/&nbsp;/g, '')
+          : row[0].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
+      land: row[1].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
+      building: row[2].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
+      total: row[3].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
+    });
+  }
+  return assessments;
 }
 
-getData();
+async function getAssessments() {
+  const accounts = await getData();
+  const properties = await getProperties(accounts);
+
+  writeFile(
+    resolve(__dirname, '../../../data/properties.json'),
+    JSON.stringify(properties),
+    { encoding: 'utf8' },
+    err => console.error(err),
+  );
+}
+
+getAssessments();
