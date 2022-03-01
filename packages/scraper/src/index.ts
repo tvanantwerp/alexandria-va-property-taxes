@@ -10,8 +10,10 @@ interface Address {
   streetName: string;
 }
 
+const BASE_URL = 'https://realestate.alexandriava.gov/';
+
 function getPropertyURI({ streetNumber, streetName }: Address) {
-  return `https://realestate.alexandriava.gov/index.php?StreetNumber=${streetNumber}&StreetName=${streetName}&UnitNo=&Search=Search`;
+  return `${BASE_URL}index.php?StreetNumber=${streetNumber}&StreetName=${streetName}&UnitNo=&Search=Search`;
 }
 
 async function getAccountNumbers(streetAddresses: Address[]) {
