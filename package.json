@@ -1,0 +1,8 @@
+{
+  "name": "alexandria-va-property-taxes",
+  "version": "1.0.0",
+  "description": "Collection of data about Alexandria, VA, property taxes.",
+  "main": "index.ts",
+  "author": "Tom VanAntwerp <tom@tomvanantwerp.com>",
+  "license": "MIT"
+}
