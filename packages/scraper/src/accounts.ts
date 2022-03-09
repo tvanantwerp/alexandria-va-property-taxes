@@ -1,5 +1,13 @@
+import { PromisePool } from '@supercharge/promise-pool';
+
 import { streets } from './streets';
-import { Address, BASE_URL, fetchPageData, getPropertyURI } from './util';
+import {
+  Address,
+  BASE_URL,
+  fetchPageData,
+  getPropertyURI,
+  sleep,
+} from './util';
 
 async function parsePageData(
   data: Document,
@@ -38,12 +46,23 @@ async function parsePageData(
 }
 
 async function getAccountNumbers(streets: Address[]) {
-  return await Promise.all(
-    streets.map(async street => {
+  const { results, errors } = await PromisePool.withConcurrency(5)
+    .for(streets)
+    .handleError(async (error, street, pool) => {
+      if (error) {
+        console.error('Error in handling street.', error, street);
+        return pool.stop();
+      }
+    })
+    .process(async street => {
       const rawData = await fetchPageData(getPropertyURI(street));
+      sleep(10);
       return parsePageData(rawData);
-    }),
-  );
+    });
+  if (errors) {
+    console.error('Failure in getAccountNumbers', errors);
+  }
+  return results;
 }
 
 export async function getData() {

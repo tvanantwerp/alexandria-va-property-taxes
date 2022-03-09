@@ -1,5 +1,7 @@
 import axios from 'axios';
 import * as fs from 'fs';
+import http from 'http';
+import https from 'https';
 import { JSDOM } from 'jsdom';
 import * as path from 'path';
 
@@ -8,6 +10,8 @@ export interface Address {
   streetName: string;
 }
 
+let count = 0;
+
 export const BASE_URL = 'https://realestate.alexandriava.gov/';
 
 export function getPropertyURI({ streetNumber = '', streetName }: Address) {
@@ -15,6 +19,7 @@ export function getPropertyURI({ streetNumber = '', streetName }: Address) {
 }
 
 export async function fetchPageData(URI: string, ignoreCache = false) {
+  console.log(`Getting data for ${URI}...`);
   if (
     !ignoreCache &&
     fs.existsSync(
@@ -25,18 +30,22 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
     )
   ) {
     console.log(`I read ${URI} from cache`);
-    const HTMLData = fs.readFileSync(
+    const data = fs.readFileSync(
       path.resolve(
         __dirname,
         `../../../.cache/${Buffer.from(URI).toString('base64')}.txt`,
       ),
       { encoding: 'utf8' },
     );
-    const dom = new JSDOM(HTMLData);
+    const dom = new JSDOM(data);
     return dom.window.document;
   } else {
-    console.log(`I fetched ${URI} fresh`);
-    const HTMLData = await axios.get(URI);
+    count++;
+    console.log(`Fetch ${count}: I fetched ${URI} fresh`);
+    const HTMLData = await axios.get(URI, {
+      httpAgent: new http.Agent({ keepAlive: true }),
+      httpsAgent: new https.Agent({ keepAlive: true }),
+    });
     if (!ignoreCache) {
       fs.writeFileSync(
         path.resolve(
@@ -50,4 +59,8 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
     const dom = new JSDOM(HTMLData.data);
     return dom.window.document;
   }
+}
+
+export function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }

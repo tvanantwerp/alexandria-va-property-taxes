@@ -1,8 +1,9 @@
-import { writeFile } from 'fs';
+import { PromisePool } from '@supercharge/promise-pool';
+import { existsSync, readFile, readFileSync, writeFile } from 'fs';
 import { resolve } from 'path';
 
 import { getData } from './accounts';
-import { BASE_URL, fetchPageData } from './util';
+import { BASE_URL, fetchPageData, sleep } from './util';
 
 interface Assessment {
   date: string;
@@ -12,8 +13,19 @@ interface Assessment {
 }
 
 async function getProperties(accounts: string[]) {
-  return await Promise.all(
-    accounts.map(async account => {
+  const { results, errors } = await PromisePool.withConcurrency(5)
+    .for(accounts)
+    .handleError(async (error, account, pool) => {
+      if (error) {
+        console.error(
+          'Experienced an error while getting properties.',
+          error,
+          account,
+        );
+        return pool.stop();
+      }
+    })
+    .process(async account => {
       const page = await fetchPageData(
         `${BASE_URL}detail.php?accountno=${account}`,
       );
@@ -29,6 +41,7 @@ async function getProperties(accounts: string[]) {
         .querySelector('div.data:nth-child(9)')
         .innerHTML.replace(/(\n|\t|\r)/g, '');
       const assessments = await parseAssessmentData(page);
+      sleep(10);
 
       return {
         address,
@@ -36,16 +49,17 @@ async function getProperties(accounts: string[]) {
         description,
         assessments,
       };
-    }),
-  );
+    });
+  if (errors) {
+    console.error('Failure in getProperties', errors);
+  }
+  return results;
 }
 
 async function parseAssessmentData(data: Document) {
   const assessments: Assessment[] = [];
   const rows = Array.from(
-    data.querySelector(
-      '#coa_rea_main > table:nth-child(17) > tbody:nth-child(1)',
-    ).children,
+    data.querySelector('#coa_rea_main > table:nth-of-type(2) > tbody').children,
   );
   for (let i = 0; i < rows.length; i++) {
     if (i === 0) continue;
@@ -64,7 +78,27 @@ async function parseAssessmentData(data: Document) {
 }
 
 async function getAssessments() {
-  const accounts = await getData();
+  let accounts: string[];
+  if (existsSync(resolve(__dirname, `../../../data/accounts.json`))) {
+    console.log('Getting list of accounts from file...');
+    accounts = JSON.parse(
+      readFileSync(resolve(__dirname, `../../../data/accounts.json`), {
+        encoding: 'utf8',
+      }),
+    );
+  } else {
+    console.log('Scraping to get list of accounts...');
+    accounts = await getData();
+
+    console.log('Saving scraped list of accounts...');
+    writeFile(
+      resolve(__dirname, '../../../data/accounts.json'),
+      JSON.stringify(accounts),
+      { encoding: 'utf8' },
+      err => console.error(err),
+    );
+  }
+
   const properties = await getProperties(accounts);
 
   writeFile(

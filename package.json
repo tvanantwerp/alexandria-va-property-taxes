@@ -8,6 +8,9 @@
   "workspaces": [
     "packages/*"
   ],
+  "scripts": {
+    "scrape": "yarn workspace scraper start"
+  },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^3.1.1",
     "@types/node": "^17.0.21",
