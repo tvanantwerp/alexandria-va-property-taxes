@@ -37,6 +37,9 @@ async function getProperties(accounts: string[]) {
       if (type.match(/(SUB-PARCEL)/)) {
         return;
       }
+      const studyGroup = page.querySelector(
+        '#coa_rea_main > table:nth-of-type(1) > tbody > tr:nth-child(1) > td:nth-child(2) > span:nth-child(5)',
+      ).innerHTML;
       const address = page
         .querySelector('h3.notranslate')
         .innerHTML.replace('\t\t\t\t\t\t\t  \n', '');
@@ -49,6 +52,7 @@ async function getProperties(accounts: string[]) {
       return {
         address,
         type,
+        studyGroup,
         description,
         assessments,
       };
