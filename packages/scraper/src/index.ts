@@ -1,5 +1,5 @@
 import { PromisePool } from '@supercharge/promise-pool';
-import { existsSync, readFile, readFileSync, writeFile } from 'fs';
+import { existsSync, readFileSync, writeFile } from 'fs';
 import { resolve } from 'path';
 
 import { getData } from './accounts';
@@ -29,14 +29,17 @@ async function getProperties(accounts: string[]) {
       const page = await fetchPageData(
         `${BASE_URL}detail.php?accountno=${account}`,
       );
+      const type = page
+        .querySelector(
+          '#coa_rea_main > table:nth-of-type(1) > tbody > tr:nth-child(1) > td:nth-child(1) > span:nth-child(5)',
+        )
+        .innerHTML.replace(/(\n|\t|\r)/g, '');
+      if (type.match(/(SUB-PARCEL)/)) {
+        return;
+      }
       const address = page
         .querySelector('h3.notranslate')
         .innerHTML.replace('\t\t\t\t\t\t\t  \n', '');
-      const type = page
-        .querySelector(
-          '#coa_rea_main > table:nth-child(8) > tbody:nth-child(1) > tr:nth-child(1) > td:nth-child(1) > span:nth-child(5)',
-        )
-        .innerHTML.replace(/(\n|\t|\r)/g, '');
       const description = page
         .querySelector('div.data:nth-child(9)')
         .innerHTML.replace(/(\n|\t|\r)/g, '');
@@ -58,9 +61,14 @@ async function getProperties(accounts: string[]) {
 
 async function parseAssessmentData(data: Document) {
   const assessments: Assessment[] = [];
-  const rows = Array.from(
-    data.querySelector('#coa_rea_main > table:nth-of-type(2) > tbody').children,
-  );
+  const table: HTMLTableElement = Array.from(
+    data.querySelectorAll('table'),
+  ).filter(b =>
+    b.children[0].children[0].children[0].children[0].innerHTML.match(
+      /Assessment Date/,
+    ),
+  )[0];
+  const rows = Array.from(table.children[0].children);
   for (let i = 0; i < rows.length; i++) {
     if (i === 0) continue;
     const row = rows[i].children;
