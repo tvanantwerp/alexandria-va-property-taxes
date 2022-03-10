@@ -13,6 +13,7 @@ interface Assessment {
 }
 
 async function getProperties(accounts: string[]) {
+  let count = 1;
   const { results, errors } = await PromisePool.withConcurrency(5)
     .for(accounts)
     .handleError(async (error, account, pool) => {
@@ -26,6 +27,10 @@ async function getProperties(accounts: string[]) {
       }
     })
     .process(async account => {
+      console.log(
+        `Fetching account ${count} of ${accounts.length}, number ${account}.`,
+      );
+      count++;
       const page = await fetchPageData(
         `${BASE_URL}detail.php?accountno=${account}`,
       );
@@ -57,7 +62,7 @@ async function getProperties(accounts: string[]) {
         assessments,
       };
     });
-  if (errors) {
+  if (errors.length) {
     console.error('Failure in getProperties', errors);
   }
   return results;
