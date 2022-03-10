@@ -1,5 +1,6 @@
 import axios from 'axios';
-import * as fs from 'fs';
+import { existsSync, writeFileSync } from 'fs';
+import { readFile } from 'fs/promises';
 import http from 'http';
 import https from 'https';
 import { JSDOM } from 'jsdom';
@@ -22,7 +23,7 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
   console.log(`Getting data for ${URI}...`);
   if (
     !ignoreCache &&
-    fs.existsSync(
+    existsSync(
       path.resolve(
         __dirname,
         `../../../.cache/${Buffer.from(URI).toString('base64')}.txt`,
@@ -30,7 +31,7 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
     )
   ) {
     console.log(`I read ${URI} from cache`);
-    const data = fs.readFileSync(
+    const data = await readFile(
       path.resolve(
         __dirname,
         `../../../.cache/${Buffer.from(URI).toString('base64')}.txt`,
@@ -47,7 +48,7 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
       httpsAgent: new https.Agent({ keepAlive: true }),
     });
     if (!ignoreCache) {
-      fs.writeFileSync(
+      writeFileSync(
         path.resolve(
           __dirname,
           `../../../.cache/${Buffer.from(URI).toString('base64')}.txt`,
