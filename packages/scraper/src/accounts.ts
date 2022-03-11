@@ -45,7 +45,7 @@ async function parsePageData(
   ).map(el => el.innerHTML);
 }
 
-async function getAccountNumbers(streets: Address[]) {
+async function getRawAccounts(streets: Address[]) {
   const { results, errors } = await PromisePool.withConcurrency(5)
     .for(streets)
     .handleError(async (error, street, pool) => {
@@ -60,13 +60,13 @@ async function getAccountNumbers(streets: Address[]) {
       return parsePageData(rawData);
     });
   if (errors) {
-    console.error('Failure in getAccountNumbers', errors);
+    console.error('Failure in getRawAccounts', errors);
   }
   return results;
 }
 
-export async function getData() {
-  const accounts = await getAccountNumbers(streets);
+export async function getAccountNumbers() {
+  const accounts = await getRawAccounts(streets);
   const flatAccounts = accounts.flat();
   return flatAccounts;
 }
