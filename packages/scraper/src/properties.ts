@@ -7,6 +7,14 @@ interface Assessment {
   total: string;
 }
 
+interface Sale {
+  day: number;
+  month: number;
+  year: number;
+  purchaseCode: string;
+  price: number;
+}
+
 interface Property {
   streetNumber: string;
   streetName: string;
@@ -22,6 +30,34 @@ interface Property {
   fullBaths?: number;
   halfBaths?: number;
   assessments: Assessment[];
+  sales: Sale[];
+}
+
+async function parseSalesData(data: Document) {
+  const sales: Sale[] = [];
+  const table: HTMLTableElement = Array.from(
+    data.querySelectorAll('table'),
+  ).filter(b =>
+    b.children[0].children[0].children[0].innerHTML.match(/Sale Date/),
+  )[0];
+  const rows = Array.from(table.children[0].children);
+  if (rows[1].children.length === 1) {
+    return sales;
+  }
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i].children;
+    const [month, day, year] = row[0].querySelector('div').innerHTML.split('/');
+    sales.push({
+      day: +day,
+      month: +month,
+      year: +year,
+      price: +row[1]
+        .querySelector('div')
+        .innerHTML.replace(/(?:&nbsp;|\$|,)/g, ''),
+      purchaseCode: row[4].querySelector('a').innerHTML.replace(/&nbsp;/g, ''),
+    });
+  }
+  return sales;
 }
 
 async function parseAssessmentData(data: Document) {
@@ -34,8 +70,7 @@ async function parseAssessmentData(data: Document) {
     ),
   )[0];
   const rows = Array.from(table.children[0].children);
-  for (let i = 0; i < rows.length; i++) {
-    if (i === 0) continue;
+  for (let i = 1; i < rows.length; i++) {
     const row = rows[i].children;
     assessments.push({
       date:
@@ -80,65 +115,68 @@ export async function parsePropertyDetails(account: string): Promise<Property> {
     .querySelector('div.data:nth-child(9)')
     .innerHTML.replace(/(\n|\t|\r)/g, '');
 
-  let lotSize: number | null,
-    findLotSize: any[] | null = rawHTML.match(
-      /Lot Size \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
-    );
+  let lotSize: number | null;
+  const findLotSize: string[] | null = rawHTML.match(
+    /Lot Size \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
+  );
   if (findLotSize) lotSize = +findLotSize[1].replace(',', '');
 
-  let yearBuilt: number | null,
-    findYearBuilt: any[] | null = rawHTML.match(
-      /Year Built:(?:<\/span>)? (\d+)/,
-    );
+  let yearBuilt: number | null;
+  const findYearBuilt: string[] | null = rawHTML.match(
+    /Year Built:(?:<\/span>)? (\d+)/,
+  );
   if (findYearBuilt) yearBuilt = +findYearBuilt[1];
 
-  let livingArea: number | null,
-    findLivingArea: any[] | null = rawHTML.match(
-      /(?:Above Grade Living Area|Unit Size) \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
-    );
+  let livingArea: number | null;
+  const findLivingArea: string[] | null = rawHTML.match(
+    /(?:Above Grade Living Area|Unit Size) \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
+  );
   if (findLivingArea) livingArea = +findLivingArea[1].replace(',', '');
 
-  let totalBasement: number | null,
-    findTotalBasement: any[] | null = rawHTML.match(
-      /Total Basement Area \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
-    );
+  let totalBasement: number | null;
+  const findTotalBasement: string[] | null = rawHTML.match(
+    /Total Basement Area \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
+  );
   if (findTotalBasement) totalBasement = +findTotalBasement[1].replace(',', '');
 
-  let finishedBasement: number | null,
-    findFinishedBasement: any[] | null = rawHTML.match(
-      /Finished Basement Area \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
-    );
+  let finishedBasement: number | null;
+  const findFinishedBasement: string[] | null = rawHTML.match(
+    /Finished Basement Area \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
+  );
   if (findFinishedBasement)
     finishedBasement = +findFinishedBasement[1].replace(',', '');
 
-  let fullBaths: number | null,
-    findFullBaths: any[] | null = rawHTML.match(
-      /Full Baths:(?:<\/span>)? (\d+)/,
-    );
+  let fullBaths: number | null;
+  const findFullBaths: string[] | null = rawHTML.match(
+    /Full Baths:(?:<\/span>)? (\d+)/,
+  );
   if (findFullBaths) fullBaths = +findFullBaths[1];
 
-  let halfBaths: number | null,
-    findHalfBaths: any[] | null = rawHTML.match(
-      /Half Baths:(?:<\/span>)? (\d+)/,
-    );
+  let halfBaths: number | null;
+  const findHalfBaths: string[] | null = rawHTML.match(
+    /Half Baths:(?:<\/span>)? (\d+)/,
+  );
   if (findHalfBaths) halfBaths = +findHalfBaths[1];
 
-  let buildingType: string | null,
-    findBuildingType: any[] | null = rawHTML.match(
-      /Building Type:(?:<\/span>)?\s?(.*)<br>/,
-    );
+  let buildingType: string | null;
+  const findBuildingType: string[] | null = rawHTML.match(
+    /Building Type:(?:<\/span>)?\s?(.*)<br>/,
+  );
   if (findBuildingType) buildingType = findBuildingType[1].replace('&lt;', '<');
 
   const assessments = await parseAssessmentData(page);
+  const sales = await parseSalesData(page);
   sleep(10);
 
   const result: Property = {
-    address,
+    streetNumber,
+    streetName,
     type,
     studyGroup,
     description,
     lotSize,
     assessments,
+    sales,
   };
 
   if (yearBuilt) result.yearBuilt = yearBuilt;
