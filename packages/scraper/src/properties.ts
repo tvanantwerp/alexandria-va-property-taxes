@@ -8,7 +8,8 @@ interface Assessment {
 }
 
 interface Property {
-  address: string;
+  streetNumber: string;
+  streetName: string;
   type: string;
   studyGroup: number;
   description: string;
@@ -67,7 +68,14 @@ export async function parsePropertyDetails(account: string): Promise<Property> {
   ).innerHTML;
   const address = page
     .querySelector('h3.notranslate')
-    .innerHTML.replace('\t\t\t\t\t\t\t  \n', '');
+    .innerHTML.replace(/(\n|\t|\r)/g, '')
+    .match(/(\d+(?:\w+?|\/\d+)?)\s*(.*?),/);
+  let streetNumber: string, streetName: string;
+  if (address) {
+    [, streetNumber, streetName] = address;
+  } else {
+    [streetNumber, streetName] = ['', ''];
+  }
   const description = page
     .querySelector('div.data:nth-child(9)')
     .innerHTML.replace(/(\n|\t|\r)/g, '');
