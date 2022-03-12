@@ -11,11 +11,9 @@ datasource db {
 }
 
 model Property {
-  id               Int          @id
+  id               Int           @id
   streetNumber     Int
   streetName       String
-  type             String
-  studyGroup       Int
   description      String
   lotSize          Int
   yearBuilt        Int
@@ -27,6 +25,10 @@ model Property {
   halfBaths        Int
   assessments      Assessment[]
   sales            Sale[]
+  studyGroup       StudyGroup?   @relation(fields: [studyGroupId], references: [id])
+  studyGroupId     Int?
+  propertyType     PropertyType? @relation(fields: [propertyTypeId], references: [id])
+  propertyTypeId   String?
 }
 
 model Assessment {
@@ -47,4 +49,14 @@ model Sale {
   day        Int
   month      Int
   year       Int
+}
+
+model StudyGroup {
+  id         Int        @id
+  properties Property[]
+}
+
+model PropertyType {
+  id         String     @id
+  properties Property[]
 }
