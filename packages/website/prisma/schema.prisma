@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Property {
+  id               Int          @id
+  address          String
+  type             String
+  studyGroup       Int
+  description      String
+  lotSize          Int
+  yearBuilt        Int
+  buildingType     String
+  livingArea       Int
+  totalBasement    Int?
+  finishedBasement Int?
+  fullBaths        Int
+  halfBaths        Int
+  assessments      Assessment[]
+  sales            Sale[]
+}
+
+model Assessment {
+  id         String   @id @default(uuid())
+  propertyId Int
+  property   Property @relation(fields: [propertyId], references: [id])
+  month      Int
+  year       Int
+  land       Int
+  building   Int
+}
+
+model Sale {
+  id         String   @id @default(uuid())
+  propertyId Int
+  property   Property @relation(fields: [propertyId], references: [id])
+  price      Int
+  day        Int
+  month      Int
+  year       Int
+}
