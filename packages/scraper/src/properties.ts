@@ -74,46 +74,52 @@ export async function parsePropertyDetails(account: string): Promise<Property> {
 
   let lotSize: number | null,
     findLotSize: any[] | null = rawHTML.match(
-      /Lot Size \(Sq\. Ft\.\):(<\/span>)?\s?((\d+,?)+)/,
+      /Lot Size \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
     );
-  if (findLotSize) lotSize = +findLotSize[2].replace(',', '');
+  if (findLotSize) lotSize = +findLotSize[1].replace(',', '');
 
   let yearBuilt: number | null,
-    findYearBuilt: any[] | null = rawHTML.match(/Year Built:(<\/span>)? (\d+)/);
-  if (findYearBuilt) yearBuilt = +findYearBuilt[2];
+    findYearBuilt: any[] | null = rawHTML.match(
+      /Year Built:(?:<\/span>)? (\d+)/,
+    );
+  if (findYearBuilt) yearBuilt = +findYearBuilt[1];
 
   let livingArea: number | null,
     findLivingArea: any[] | null = rawHTML.match(
-      /Above Grade Living Area \(Sq\. Ft\.\):(<\/span>)?\s?((\d+,?)+)/,
+      /(?:Above Grade Living Area|Unit Size) \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
     );
-  if (findLivingArea) livingArea = +findLivingArea[2].replace(',', '');
+  if (findLivingArea) livingArea = +findLivingArea[1].replace(',', '');
 
   let totalBasement: number | null,
     findTotalBasement: any[] | null = rawHTML.match(
-      /Total Basement Area \(Sq\. Ft\.\):(<\/span>)?\s?((\d+,?)+)/,
+      /Total Basement Area \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
     );
-  if (findTotalBasement) totalBasement = +findTotalBasement[2].replace(',', '');
+  if (findTotalBasement) totalBasement = +findTotalBasement[1].replace(',', '');
 
   let finishedBasement: number | null,
     findFinishedBasement: any[] | null = rawHTML.match(
-      /Finished Basement Area \(Sq\. Ft\.\):(<\/span>)?\s?((\d+,?)+)/,
+      /Finished Basement Area \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
     );
   if (findFinishedBasement)
-    finishedBasement = +findFinishedBasement[2].replace(',', '');
+    finishedBasement = +findFinishedBasement[1].replace(',', '');
 
   let fullBaths: number | null,
-    findFullBaths: any[] | null = rawHTML.match(/Full Baths:(<\/span>)? (\d+)/);
-  if (findFullBaths) fullBaths = +findFullBaths[2];
+    findFullBaths: any[] | null = rawHTML.match(
+      /Full Baths:(?:<\/span>)? (\d+)/,
+    );
+  if (findFullBaths) fullBaths = +findFullBaths[1];
 
   let halfBaths: number | null,
-    findHalfBaths: any[] | null = rawHTML.match(/Half Baths:(<\/span>)? (\d+)/);
-  if (findHalfBaths) halfBaths = +findHalfBaths[2];
+    findHalfBaths: any[] | null = rawHTML.match(
+      /Half Baths:(?:<\/span>)? (\d+)/,
+    );
+  if (findHalfBaths) halfBaths = +findHalfBaths[1];
 
   let buildingType: string | null,
     findBuildingType: any[] | null = rawHTML.match(
-      /Building Type:(<\/span>)?\s?((\w+\s?)+)/,
+      /Building Type:(?:<\/span>)?\s?(.*)<br>/,
     );
-  if (findBuildingType) buildingType = findBuildingType[2];
+  if (findBuildingType) buildingType = findBuildingType[1].replace('&lt;', '<');
 
   const assessments = await parseAssessmentData(page);
   sleep(10);
