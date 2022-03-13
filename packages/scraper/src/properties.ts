@@ -13,6 +13,7 @@ interface Sale {
   year: number;
   purchaseCode: string;
   price: number;
+  id: number;
 }
 
 interface Property {
@@ -48,6 +49,7 @@ async function parseSalesData(data: Document) {
     const row = rows[i].children;
     const [month, day, year] = row[0].querySelector('div').innerHTML.split('/');
     sales.push({
+      id: +row[5].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
       day: +day,
       month: +month,
       year: +year,
