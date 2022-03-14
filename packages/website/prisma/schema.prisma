@@ -12,17 +12,17 @@ datasource db {
 
 model Property {
   id               Int           @id
-  streetNumber     Int
+  streetNumber     String
   streetName       String
   description      String
   lotSize          Int
-  yearBuilt        Int
-  buildingType     String
-  livingArea       Int
+  yearBuilt        Int?
+  buildingType     String?
+  livingArea       Int?
   totalBasement    Int?
   finishedBasement Int?
-  fullBaths        Int
-  halfBaths        Int
+  fullBaths        Int?
+  halfBaths        Int?
   assessments      Assessment[]
   sales            Sale[]
   studyGroup       StudyGroup?   @relation(fields: [studyGroupId], references: [id])
@@ -42,13 +42,14 @@ model Assessment {
 }
 
 model Sale {
-  id         String   @id @default(uuid())
-  propertyId Int
-  property   Property @relation(fields: [propertyId], references: [id])
-  price      Int
-  day        Int
-  month      Int
-  year       Int
+  id           Int      @id
+  propertyId   Int
+  property     Property @relation(fields: [propertyId], references: [id])
+  purchaseCode String
+  price        Int
+  day          Int
+  month        Int
+  year         Int
 }
 
 model StudyGroup {

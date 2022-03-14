@@ -12,6 +12,7 @@
     "scrape": "yarn workspace scraper start"
   },
   "devDependencies": {
+    "@supercharge/promise-pool": "^2.1.0",
     "@trivago/prettier-plugin-sort-imports": "^3.1.1",
     "@types/node": "^17.0.21",
     "@typescript-eslint/eslint-plugin": "^5.10.0",

@@ -1,13 +1,13 @@
 import { BASE_URL, fetchPageData, sleep } from './util';
 
-interface Assessment {
+export interface Assessment {
   date: string;
-  land: string;
-  building: string;
+  land: number;
+  building: number;
   total: string;
 }
 
-interface Sale {
+export interface Sale {
   day: number;
   month: number;
   year: number;
@@ -16,7 +16,8 @@ interface Sale {
   id: number;
 }
 
-interface Property {
+export interface Property {
+  account: number;
   streetNumber: string;
   streetName: string;
   type: string;
@@ -79,8 +80,12 @@ async function parseAssessmentData(data: Document) {
         i === 1
           ? row[0].querySelector('a').innerHTML.replace(/&nbsp;/g, '')
           : row[0].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
-      land: row[1].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
-      building: row[2].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
+      land: +row[1]
+        .querySelector('div')
+        .innerHTML.replace(/(?:&nbsp;|\$|,)/g, ''),
+      building: +row[2]
+        .querySelector('div')
+        .innerHTML.replace(/(?:&nbsp;|\$|,)/g, ''),
       total: row[3].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
     });
   }
@@ -171,6 +176,7 @@ export async function parsePropertyDetails(account: string): Promise<Property> {
   sleep(10);
 
   const result: Property = {
+    account: +account,
     streetNumber,
     streetName,
     type,
