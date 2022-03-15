@@ -49,15 +49,16 @@ async function loadData() {
             },
           },
           assessments: {
-            create: property.assessments.map(({ date, land, building }) => {
-              const [month, year] = date.split('/');
-              return {
-                month: +month,
-                year: +year,
-                land: +land,
-                building: +building,
-              };
-            }),
+            create: property.assessments.map(
+              ({ month, year, land, building }) => {
+                return {
+                  month,
+                  year,
+                  land,
+                  building,
+                };
+              },
+            ),
           },
           sales: {
             create: property.sales.map(
