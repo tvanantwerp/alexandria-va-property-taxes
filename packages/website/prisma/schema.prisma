@@ -11,7 +11,8 @@ datasource db {
 }
 
 model Property {
-  id               Int           @id
+  id               String        @id @default(uuid())
+  account          Int
   streetNumber     String
   streetName       String
   description      String
@@ -25,15 +26,15 @@ model Property {
   halfBaths        Int?
   assessments      Assessment[]
   sales            Sale[]
-  studyGroup       StudyGroup?   @relation(fields: [studyGroupId], references: [id])
-  studyGroupId     Int?
-  propertyType     PropertyType? @relation(fields: [propertyTypeId], references: [id])
+  StudyGroup       StudyGroup?   @relation(fields: [studyGroupId], references: [id])
+  studyGroupId     String?
+  PropertyType     PropertyType? @relation(fields: [propertyTypeId], references: [id])
   propertyTypeId   String?
 }
 
 model Assessment {
   id         String   @id @default(uuid())
-  propertyId Int
+  propertyId String
   property   Property @relation(fields: [propertyId], references: [id])
   month      Int
   year       Int
@@ -42,8 +43,9 @@ model Assessment {
 }
 
 model Sale {
-  id           String   @id
-  propertyId   Int
+  id           String   @id @default(uuid())
+  saleId       String
+  propertyId   String
   property     Property @relation(fields: [propertyId], references: [id])
   purchaseCode String
   price        Int
@@ -53,11 +55,13 @@ model Sale {
 }
 
 model StudyGroup {
-  id         Int        @id
-  properties Property[]
+  id           String     @id @default(uuid())
+  studyGroupID Int        @unique
+  properties   Property[]
 }
 
 model PropertyType {
-  id         String     @id
-  properties Property[]
+  id             String     @id @default(uuid())
+  propertyTypeId String     @unique
+  properties     Property[]
 }

@@ -48,7 +48,11 @@ async function getProperties(accounts: string[]) {
   for (const [key, value] of Object.entries(studyGroups)) {
     formattedStudyGroups.push({ group: +key, accounts: value });
   }
-  return [results, formattedStudyGroups, propertyTypes];
+  return [
+    results.filter(result => result !== null),
+    formattedStudyGroups,
+    propertyTypes,
+  ];
 }
 
 async function getAssessments() {

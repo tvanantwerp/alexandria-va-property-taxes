@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { PromisePool } from '@supercharge/promise-pool';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
 
@@ -15,61 +14,77 @@ async function getProperties(): Promise<Property[]> {
   return JSON.parse(properties);
 }
 
-async function loadData() {
-  const properties = await getProperties();
-  await PromisePool.withConcurrency(5)
-    .for(properties)
-    .handleError(async (error, property, pool) => {
-      console.error(error, property);
-      return pool.stop();
-    })
-    .process(async property => {
-      return db.property.create({
-        data: {
-          id: property.account,
-          streetNumber: property.streetNumber,
-          streetName: property.streetName,
-          description: property.description,
-          lotSize: property.lotSize,
-          yearBuilt: property.yearBuilt,
-          buildingType: property.buildingType,
-          livingArea: property.livingArea,
-          totalBasement: property.totalBasement,
-          finishedBasement: property.finishedBasement,
-          fullBaths: property.fullBaths,
-          halfBaths: property.halfBaths,
-          studyGroup: {
+async function createProperty(property: Property) {
+  try {
+    await db.property.create({
+      data: {
+        account: property.account,
+        streetNumber: property.streetNumber,
+        streetName: property.streetName,
+        description: property.description,
+        lotSize: property.lotSize,
+        yearBuilt: property.yearBuilt,
+        buildingType: property.buildingType,
+        livingArea: property.livingArea,
+        totalBasement: property.totalBasement,
+        finishedBasement: property.finishedBasement,
+        fullBaths: property.fullBaths,
+        halfBaths: property.halfBaths,
+        StudyGroup: {
+          connectOrCreate: {
             create: {
-              id: property.studyGroup,
+              studyGroupID: property.studyGroup,
             },
-          },
-          propertyType: {
-            create: {
-              id: property.type,
+            where: {
+              studyGroupID: property.studyGroup,
             },
-          },
-          assessments: {
-            create: property.assessments.map(
-              ({ month, year, land, building }) => {
-                return {
-                  month,
-                  year,
-                  land,
-                  building,
-                };
-              },
-            ),
-          },
-          sales: {
-            create: property.sales.map(
-              ({ id, purchaseCode, price, day, month, year }) => {
-                return { id, purchaseCode, price, day, month, year };
-              },
-            ),
           },
         },
-      });
+        PropertyType: {
+          connectOrCreate: {
+            create: {
+              propertyTypeId: property.type,
+            },
+            where: {
+              propertyTypeId: property.type,
+            },
+          },
+        },
+        assessments: {
+          create: property.assessments.map(
+            ({ month, year, land, building }) => {
+              return {
+                month,
+                year,
+                land,
+                building,
+              };
+            },
+          ),
+        },
+        sales: {
+          create: property.sales.map(
+            ({ id, purchaseCode, price, day, month, year }) => {
+              return { saleId: id, purchaseCode, price, day, month, year };
+            },
+          ),
+        },
+      },
     });
+  } catch (error) {
+    console.error(error, property);
+  }
+}
+
+async function loadData() {
+  getProperties().then(async properties => {
+    let count = 0;
+    for (const property of properties) {
+      await createProperty(property);
+      count++;
+      console.log(`Created ${count} of ${properties.length}`);
+    }
+  });
 }
 
 loadData();
