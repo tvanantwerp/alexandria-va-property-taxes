@@ -42,7 +42,7 @@ model Assessment {
 }
 
 model Sale {
-  id           Int      @id
+  id           String   @id
   propertyId   Int
   property     Property @relation(fields: [propertyId], references: [id])
   purchaseCode String

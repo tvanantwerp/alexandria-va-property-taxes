@@ -13,7 +13,8 @@
     "dev:css": "npm run build:css -- --w",
     "postinstall": "remix setup node",
     "start": "cross-env NODE_ENV=production remix-serve build",
-    "loadData": "node --require esbuild-register prisma/loadData.ts"
+    "loadData": "node --require esbuild-register prisma/loadData.ts",
+    "prepDatabase": "npx prisma db push"
   },
   "dependencies": {
     "@prisma/client": "^3.10.0",

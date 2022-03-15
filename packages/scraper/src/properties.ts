@@ -1,19 +1,20 @@
 import { BASE_URL, fetchPageData, sleep } from './util';
 
 export interface Assessment {
-  date: string;
+  month: number;
+  year: number;
   land: number;
   building: number;
   total: string;
 }
 
 export interface Sale {
+  id: string;
   day: number;
   month: number;
   year: number;
   purchaseCode: string;
   price: number;
-  id: number;
 }
 
 export interface Property {
@@ -50,7 +51,7 @@ async function parseSalesData(data: Document) {
     const row = rows[i].children;
     const [month, day, year] = row[0].querySelector('div').innerHTML.split('/');
     sales.push({
-      id: +row[5].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
+      id: row[5].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
       day: +day,
       month: +month,
       year: +year,
@@ -76,10 +77,8 @@ async function parseAssessmentData(data: Document) {
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i].children;
     assessments.push({
-      date:
-        i === 1
-          ? row[0].querySelector('a').innerHTML.replace(/&nbsp;/g, '')
-          : row[0].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
+      month: +row[0].children[0].innerHTML.replace(/&nbsp;/g, '').split('/')[0],
+      year: +row[0].children[0].innerHTML.replace(/&nbsp;/g, '').split('/')[0],
       land: +row[1]
         .querySelector('div')
         .innerHTML.replace(/(?:&nbsp;|\$|,)/g, ''),
