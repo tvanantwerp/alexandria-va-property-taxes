@@ -78,7 +78,7 @@ async function parseAssessmentData(data: Document) {
     const row = rows[i].children;
     assessments.push({
       month: +row[0].children[0].innerHTML.replace(/&nbsp;/g, '').split('/')[0],
-      year: +row[0].children[0].innerHTML.replace(/&nbsp;/g, '').split('/')[0],
+      year: +row[0].children[0].innerHTML.replace(/&nbsp;/g, '').split('/')[1],
       land: +row[1]
         .querySelector('div')
         .innerHTML.replace(/(?:&nbsp;|\$|,)/g, ''),

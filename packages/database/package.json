@@ -1,0 +1,31 @@
+{
+  "name": "database",
+  "version": "0.0.1",
+  "private": true,
+  "description": "",
+  "license": "",
+  "sideEffects": false,
+  "scripts": {
+    "dev": "ts-node-dev --no-notify --respawn --transpile-only src/server",
+    "exportData": "ts-node prisma/extractInfo.ts",
+    "db": "npm run db:deleteDatabase && npm run db:prepDatabase && npm run db:loadData",
+    "db:loadData": "ts-node prisma/loadData.ts",
+    "db:prepDatabase": "npx prisma db push",
+    "db:deleteDatabase": "npx rimraf ./prisma/dev.db"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/node": "^17.0.21",
+    "prisma": "^3.10.0",
+    "rimraf": "^3.0.2",
+    "ts-node": "^10.5.0",
+    "ts-node-dev": "^1.1.8"
+  },
+  "dependencies": {
+    "@graphql-tools/schema": "^8.3.2",
+    "@prisma/client": "^3.10.0",
+    "express": "^4.17.3",
+    "express-graphql": "^0.12.0",
+    "graphql": "^16.3.0"
+  }
+}
