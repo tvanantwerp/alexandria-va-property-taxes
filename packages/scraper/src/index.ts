@@ -7,6 +7,8 @@ import { parsePropertyDetails } from './properties';
 
 async function getProperties(accounts: string[]) {
   let count = 1;
+  const studyGroups: { [index: number]: number[] } = {};
+  const propertyTypes: { [index: string]: number } = {};
   const { results, errors } = await PromisePool.withConcurrency(5)
     .for(accounts)
     .handleError(async (error, account, pool) => {
@@ -24,12 +26,33 @@ async function getProperties(accounts: string[]) {
         `Fetching account ${count} of ${accounts.length}, number ${account}.`,
       );
       count++;
-      return await parsePropertyDetails(account);
+      const property = await parsePropertyDetails(account);
+      if (property) {
+        if (property.studyGroup in studyGroups) {
+          studyGroups[property.studyGroup].push(+account);
+        } else {
+          studyGroups[property.studyGroup] = [+account];
+        }
+        if (property.type in propertyTypes) {
+          propertyTypes[property.type] += 1;
+        } else {
+          propertyTypes[property.type] = 1;
+        }
+        return property;
+      }
     });
   if (errors.length) {
     console.error('Failure in getProperties', errors);
   }
-  return results;
+  const formattedStudyGroups: { group: number; accounts: number[] }[] = [];
+  for (const [key, value] of Object.entries(studyGroups)) {
+    formattedStudyGroups.push({ group: +key, accounts: value });
+  }
+  return [
+    results.filter(result => result !== null),
+    formattedStudyGroups,
+    propertyTypes,
+  ];
 }
 
 async function getAssessments() {
@@ -54,14 +77,32 @@ async function getAssessments() {
     );
   }
 
-  const properties = await getProperties(accounts);
+  const [properties, studyGroups, propertyTypes] = await getProperties(
+    accounts,
+  );
 
+  console.log('Writing properties...');
   writeFile(
     resolve(__dirname, '../../../data/properties.json'),
     JSON.stringify(properties),
     { encoding: 'utf8' },
     err => console.error(err),
   );
+  console.log('Writing study groups...');
+  writeFile(
+    resolve(__dirname, '../../../data/groups.json'),
+    JSON.stringify(studyGroups),
+    { encoding: 'utf8' },
+    err => console.error(err),
+  );
+  console.log('Writing property types...');
+  writeFile(
+    resolve(__dirname, '../../../data/types.json'),
+    JSON.stringify(propertyTypes),
+    { encoding: 'utf8' },
+    err => console.error(err),
+  );
+  console.log('Done!');
 }
 
 getAssessments();
