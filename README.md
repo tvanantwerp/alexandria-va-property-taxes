@@ -10,4 +10,4 @@ This data is downloaded and parsed from [this search tool](https://realestate.al
 
 ## Resources
 
-[Parcel data from Alexandria GID](https://cityofalexandria-alexgis.opendata.arcgis.com/maps/alexandria-parcels) and [API](https://cityofalexandria-alexgis.opendata.arcgis.com/datasets/AlexGIS::alexandria-parcels/api).
+[Parcel data from Alexandria GIS](https://cityofalexandria-alexgis.opendata.arcgis.com/maps/alexandria-parcels) and [API](https://cityofalexandria-alexgis.opendata.arcgis.com/datasets/AlexGIS::alexandria-parcels/api).
