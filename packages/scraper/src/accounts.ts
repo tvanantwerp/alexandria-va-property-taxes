@@ -56,7 +56,7 @@ async function getRawAccounts(streets: Address[]) {
     })
     .process(async street => {
       const rawData = await fetchPageData(getPropertyURI(street));
-      sleep(10);
+      sleep(100);
       return parsePageData(rawData);
     });
   if (errors) {

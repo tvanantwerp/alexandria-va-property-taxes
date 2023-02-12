@@ -172,7 +172,7 @@ export async function parsePropertyDetails(account: string): Promise<Property> {
 
   const assessments = await parseAssessmentData(page);
   const sales = await parseSalesData(page);
-  sleep(10);
+  sleep(100);
 
   const result: Property = {
     account: +account,
