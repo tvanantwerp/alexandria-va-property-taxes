@@ -1,21 +1,25 @@
 {
-  "compilerOptions": {
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noUncheckedIndexAccess": true
-  },
-  "fmt": {
-    "options": {
-      "useTabs": true,
-      "lineWidth": 80,
-      "singleQuote": true
-    }
-  },
+	"compilerOptions": {
+		"lib": [
+			"dom",
+			"esnext"
+		],
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noUncheckedIndexAccess": true
+	},
+	"fmt": {
+		"options": {
+			"useTabs": true,
+			"lineWidth": 80,
+			"singleQuote": true
+		}
+	},
 	"imports": {
 		"std/": "https://deno.land/std@0.177.0/",
 		"deno_dom": "https://deno.land/x/deno_dom@v0.1.36-alpha/deno-dom-wasm.ts"
 	},
-  "tasks": {
-    "scrape": "deno run --allow-net --allow-read --allow-write ./scraper/index.ts"
-  }
+	"tasks": {
+		"scrape": "deno run --allow-net --allow-read --allow-write ./scraper/index.ts"
+	}
 }
