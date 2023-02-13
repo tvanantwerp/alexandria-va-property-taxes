@@ -1,9 +1,5 @@
-import axios from 'axios';
-import { existsSync, writeFileSync } from 'fs';
-import { readFile } from 'fs/promises';
-import http from 'http';
-import https from 'https';
-import { JSDOM } from 'jsdom';
+import {ensureFileSync} from 'std/fs/ensure_file.ts';
+import {DOMParser} from 'deno_dom';
 import * as path from 'path';
 
 export interface Address {
@@ -23,7 +19,7 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
   console.log(`Getting data for ${URI}...`);
   if (
     !ignoreCache &&
-    existsSync(
+    ensureFileSync(
       path.resolve(
         __dirname,
         `../../../.cache/${Buffer.from(URI).toString('base64')}.txt`,
@@ -43,12 +39,9 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
   } else {
     count++;
     console.log(`Fetch ${count}: I fetched ${URI} fresh`);
-    const HTMLData = await axios.get(URI, {
-      httpAgent: new http.Agent({ keepAlive: true }),
-      httpsAgent: new https.Agent({ keepAlive: true }),
-    });
+    const HTMLData = await (await fetch(URI, {keepalive: true})).text();
     if (!ignoreCache) {
-      writeFileSync(
+      Deno.writeTextFileSync(
         path.resolve(
           __dirname,
           `../../../.cache/${Buffer.from(URI).toString('base64')}.txt`,
@@ -57,7 +50,7 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
         { encoding: 'utf8' },
       );
     }
-    const dom = new JSDOM(HTMLData.data);
+    const dom = new DOMParser(HTMLData);
     return dom.window.document;
   }
 }
