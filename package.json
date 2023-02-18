@@ -9,7 +9,8 @@
     "packages/*"
   ],
   "scripts": {
-    "scrape": "yarn workspace scraper start"
+    "scrape": "yarn workspace scraper start",
+    "db": "yarn workspace database db"
   },
   "devDependencies": {
     "@supercharge/promise-pool": "^2.1.0",
