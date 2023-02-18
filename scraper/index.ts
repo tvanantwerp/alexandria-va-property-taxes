@@ -1,5 +1,4 @@
 import { ensureDirSync, ensureFileSync } from 'std/fs/mod.ts';
-import { dirname, resolve } from 'std/path/mod.ts';
 import { pooledMap } from 'std/async/pool.ts';
 
 import { getAccountNumbers } from './accounts.ts';
@@ -52,14 +51,14 @@ async function getProperties(accounts: string[]) {
 async function getAssessments() {
 	ensureDirSync('../.cache');
 	let accounts: string[];
-	ensureFileSync(resolve(dirname, `../../../data/accounts.json`));
+	ensureFileSync(`../data/accounts.json`);
 	const accountsFile = Deno.readTextFileSync(
-		resolve(dirname, `../../../data/accounts.json`),
+		`../data/accounts.json`,
 	);
 	if (accountsFile.length > 0) {
 		console.log('Getting list of accounts from file...');
 		accounts = JSON.parse(
-			Deno.readTextFileSync(resolve(dirname, `../../../data/accounts.json`)),
+			Deno.readTextFileSync(`../data/accounts.json`),
 		);
 	} else {
 		console.log('Scraping to get list of accounts...');
@@ -67,7 +66,7 @@ async function getAssessments() {
 
 		console.log('Saving scraped list of accounts...');
 		Deno.writeTextFile(
-			resolve(dirname, '../../../data/accounts.json'),
+			'../data/accounts.json',
 			JSON.stringify(accounts),
 		);
 	}
@@ -78,17 +77,17 @@ async function getAssessments() {
 
 	console.log('Writing properties...');
 	Deno.writeTextFile(
-		resolve(dirname, '../../../data/properties.json'),
+		'../data/properties.json',
 		JSON.stringify(properties),
 	);
 	console.log('Writing study groups...');
 	Deno.writeTextFile(
-		resolve(dirname, '../../../data/groups.json'),
+		'../data/groups.json',
 		JSON.stringify(studyGroups),
 	);
 	console.log('Writing property types...');
 	Deno.writeTextFile(
-		resolve(dirname, '../../../data/types.json'),
+		'../data/types.json',
 		JSON.stringify(propertyTypes),
 	);
 	console.log('Done!');

@@ -17,8 +17,8 @@ export function getPropertyURI({ streetNumber = '', streetName }: Address) {
 
 export async function fetchPageData(URI: string, ignoreCache = false) {
 	console.log(`Getting data for ${URI}...`);
-	ensureFileSync(`../../../.cache/${decode(URI)}.txt`);
-	const data = await Deno.readTextFile(`../../../.cache/${decode(URI)}.txt`);
+	ensureFileSync(`../.cache/${decode(URI)}.txt`);
+	const data = await Deno.readTextFile(`../.cache/${decode(URI)}.txt`);
 	if (!ignoreCache && data.length > 0) {
 		console.log(`I read ${URI} from cache`);
 		const document = new DOMParser().parseFromString(data, 'text/html');
@@ -32,7 +32,7 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
 		const HTMLData = await (await fetch(URI, { keepalive: true })).text();
 		if (!ignoreCache) {
 			Deno.writeTextFileSync(
-				`../../../.cache/${encode(URI)}.txt`,
+				`../.cache/${encode(URI)}.txt`,
 				HTMLData,
 			);
 		}
