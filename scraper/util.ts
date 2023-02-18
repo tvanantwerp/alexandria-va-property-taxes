@@ -1,6 +1,6 @@
 import { ensureFileSync } from 'std/fs/ensure_file.ts';
 import { DOMParser } from 'deno_dom';
-import { decode, encode } from 'std/encoding/base64.ts';
+import { encode } from 'std/encoding/base64.ts';
 
 export interface Address {
 	streetNumber?: string;
@@ -17,8 +17,8 @@ export function getPropertyURI({ streetNumber = '', streetName }: Address) {
 
 export async function fetchPageData(URI: string, ignoreCache = false) {
 	console.log(`Getting data for ${URI}...`);
-	ensureFileSync(`../.cache/${decode(URI)}.txt`);
-	const data = await Deno.readTextFile(`../.cache/${decode(URI)}.txt`);
+	ensureFileSync(`../.cache/${encode(URI)}.txt`);
+	const data = await Deno.readTextFile(`../.cache/${encode(URI)}.txt`);
 	if (!ignoreCache && data.length > 0) {
 		console.log(`I read ${URI} from cache`);
 		const document = new DOMParser().parseFromString(data, 'text/html');
