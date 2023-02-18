@@ -43,21 +43,27 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
   } else {
     count++;
     console.log(`Fetch ${count}: I fetched ${URI} fresh`);
-    const HTMLData = await axios.get(URI, {
-      httpAgent: new http.Agent({ keepAlive: true }),
-      httpsAgent: new https.Agent({ keepAlive: true }),
-    });
+    const HTMLData = await axios
+      .get(URI, {
+        httpAgent: new http.Agent({ keepAlive: true }),
+        httpsAgent: new https.Agent({ keepAlive: true }),
+      })
+      .then(res => {
+        sleep(100);
+        return res.data;
+      })
+      .catch(err => console.error(err));
     if (!ignoreCache) {
       writeFileSync(
         path.resolve(
           __dirname,
           `../../../.cache/${Buffer.from(URI).toString('base64')}.txt`,
         ),
-        HTMLData.data,
+        HTMLData,
         { encoding: 'utf8' },
       );
     }
-    const dom = new JSDOM(HTMLData.data);
+    const dom = new JSDOM(HTMLData);
     return dom.window.document;
   }
 }

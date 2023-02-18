@@ -1,4 +1,4 @@
-import { BASE_URL, fetchPageData, sleep } from './util';
+import { BASE_URL, fetchPageData } from './util';
 
 export interface Assessment {
   month: number;
@@ -149,8 +149,9 @@ export async function parsePropertyDetails(account: string): Promise<Property> {
   const findFinishedBasement: string[] | null = rawHTML.match(
     /Finished Basement Area \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
   );
-  if (findFinishedBasement)
+  if (findFinishedBasement) {
     finishedBasement = +findFinishedBasement[1].replace(',', '');
+  }
 
   let fullBaths: number | null;
   const findFullBaths: string[] | null = rawHTML.match(
@@ -172,7 +173,6 @@ export async function parsePropertyDetails(account: string): Promise<Property> {
 
   const assessments = await parseAssessmentData(page);
   const sales = await parseSalesData(page);
-  sleep(100);
 
   const result: Property = {
     account: +account,

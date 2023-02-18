@@ -1,13 +1,7 @@
 import { PromisePool } from '@supercharge/promise-pool';
 
 import { streets } from './streets';
-import {
-  Address,
-  BASE_URL,
-  fetchPageData,
-  getPropertyURI,
-  sleep,
-} from './util';
+import { Address, BASE_URL, fetchPageData, getPropertyURI } from './util';
 
 async function parsePageData(
   data: Document,
@@ -56,7 +50,6 @@ async function getRawAccounts(streets: Address[]) {
     })
     .process(async street => {
       const rawData = await fetchPageData(getPropertyURI(street));
-      sleep(100);
       return parsePageData(rawData);
     });
   if (errors) {
