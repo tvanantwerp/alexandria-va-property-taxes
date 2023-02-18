@@ -18,39 +18,30 @@ export function getPropertyURI({ streetNumber = '', streetName }: Address) {
 
 export async function fetchPageData(URI: string, ignoreCache = false) {
 	console.log(`Getting data for ${URI}...`);
-	if (
-		!ignoreCache &&
-		ensureFileSync(
-			resolve(
-				dirname,
-				`../../../.cache/${decode(URI)}.txt`,
-			),
-		)
-	) {
+	ensureFileSync(`../../../.cache/${decode(URI)}.txt`);
+	const data = await Deno.readTextFile(`../../../.cache/${decode(URI)}.txt`);
+	if (!ignoreCache && data.length > 0) {
 		console.log(`I read ${URI} from cache`);
-		const data = await Deno.readTextFile(
-			resolve(
-				dirname,
-				`../../../.cache/${decode(URI)}.txt`,
-			),
-		);
-		const dom = new DOMParser(data);
-		return dom.window.document;
+		const document = new DOMParser().parseFromString(data, 'text/html');
+		if (!document) {
+			throw new Error(`No document was parsed from cached data: ${data}`);
+		}
+		return document;
 	} else {
 		count++;
 		console.log(`Fetch ${count}: I fetched ${URI} fresh`);
 		const HTMLData = await (await fetch(URI, { keepalive: true })).text();
 		if (!ignoreCache) {
 			Deno.writeTextFileSync(
-				resolve(
-					dirname,
-					`../../../.cache/${encode(URI)}.txt`,
-				),
+				`../../../.cache/${encode(URI)}.txt`,
 				HTMLData,
 			);
 		}
-		const dom = new DOMParser(HTMLData);
-		return dom.window.document;
+		const document = new DOMParser().parseFromString(HTMLData, 'text/html');
+		if (!document) {
+			throw new Error(`No document was parsed from fetched data: ${HTMLData}`);
+		}
+		return document;
 	}
 }
 

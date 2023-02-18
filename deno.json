@@ -2,11 +2,13 @@
 	"compilerOptions": {
 		"lib": [
 			"dom",
-			"esnext"
+			"esnext",
+			"deno.ns"
 		],
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"noUncheckedIndexAccess": true
+		"noUncheckedIndexAccess": true,
+		"strict": true
 	},
 	"fmt": {
 		"options": {
