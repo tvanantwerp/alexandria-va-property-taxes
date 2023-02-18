@@ -1,6 +1,5 @@
 import { ensureFileSync } from 'std/fs/ensure_file.ts';
 import { DOMParser } from 'deno_dom';
-import { dirname, resolve } from 'std/path/mod.ts';
 import { decode, encode } from 'std/encoding/base64.ts';
 
 export interface Address {

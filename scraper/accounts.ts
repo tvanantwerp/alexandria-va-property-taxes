@@ -1,4 +1,5 @@
 import { pooledMap } from 'std/async/pool.ts';
+import { HTMLDocument } from 'deno_dom';
 
 import { streets } from './streets.ts';
 import {
@@ -10,12 +11,12 @@ import {
 } from './util.ts';
 
 async function parsePageData(
-	data: Document,
+	data: HTMLDocument,
 	firstPage = true,
 ): Promise<string[]> {
 	const pageLinks: HTMLAnchorElement[] = Array.from(
 		data.querySelectorAll('center p a'),
-	);
+	) as unknown as HTMLAnchorElement[];
 	if (pageLinks.length > 2 && firstPage) {
 		let pages: string[] = [];
 		pageLinks.forEach((link) => {
@@ -42,7 +43,12 @@ async function parsePageData(
 		data.querySelectorAll(
 			'.searchResultDetailRow > td:nth-child(3) > span:nth-child(2)',
 		),
-	).map((el) => el.innerHTML);
+	).map((el) => {
+		if (!(el instanceof HTMLSpanElement)) {
+			throw new Error(`Failed to parse node in page: ${el}`);
+		}
+		return el.innerHTML;
+	});
 }
 
 async function getRawAccounts(streets: Address[]) {
@@ -53,8 +59,8 @@ async function getRawAccounts(streets: Address[]) {
 	});
 
 	let accounts: string[] = [];
-	for await (const account of accountsData) {
-		accounts.push(account);
+	for await (const accountsPage of accountsData) {
+		accounts.push(...accountsPage);
 	}
 
 	return accounts;
