@@ -46,7 +46,7 @@ async function parseSalesData(data: Document) {
     return b.innerHTML.match(/No Prior Sales Data Was Found/);
   });
   if (noData) {
-    return undefined;
+    return [];
   }
 
   const rows = Array.from(table.children[0].children);
@@ -82,7 +82,7 @@ async function parseAssessmentData(data: Document) {
     return b.innerHTML.match(/No Prior Assessment Data Was Found/);
   });
   if (noData) {
-    return undefined;
+    return [];
   }
 
   const rows = Array.from(table.children[0].children);
