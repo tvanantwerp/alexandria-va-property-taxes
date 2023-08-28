@@ -49,7 +49,7 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
         httpsAgent: new https.Agent({ keepAlive: true }),
       })
       .then(res => {
-        sleep(100);
+        sleep(300);
         return res.data;
       })
       .catch(err => console.error(err));
