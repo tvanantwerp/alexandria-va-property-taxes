@@ -43,7 +43,7 @@ async function parseSalesData(data: Document) {
   ).filter(b => b.querySelector('.dataheader').innerHTML.match(/Sale Date/))[0];
 
   const noData = Array.from(table.querySelectorAll('.dataheader')).some(b => {
-    b.innerHTML.match(/No Prior Assessment Data Was Found/);
+    return b.innerHTML.match(/No Prior Sales Data Was Found/);
   });
   if (noData) {
     return undefined;
@@ -79,11 +79,12 @@ async function parseAssessmentData(data: Document) {
   )[0];
 
   const noData = Array.from(table.querySelectorAll('.dataheader')).some(b => {
-    b.innerHTML.match(/No Prior Assessment Data Was Found/);
+    return b.innerHTML.match(/No Prior Assessment Data Was Found/);
   });
   if (noData) {
     return undefined;
   }
+
   const rows = Array.from(table.children[0].children);
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i].children;
