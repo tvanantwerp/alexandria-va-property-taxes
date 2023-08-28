@@ -40,9 +40,15 @@ async function parseSalesData(data: Document) {
   const sales: Sale[] = [];
   const table: HTMLTableElement = Array.from(
     data.querySelectorAll('table'),
-  ).filter(b =>
-    b.children[0].children[0].children[0].innerHTML.match(/Sale Date/),
-  )[0];
+  ).filter(b => b.querySelector('.dataheader').innerHTML.match(/Sale Date/))[0];
+
+  const noData = Array.from(table.querySelectorAll('.dataheader')).some(b => {
+    b.innerHTML.match(/No Prior Assessment Data Was Found/);
+  });
+  if (noData) {
+    return undefined;
+  }
+
   const rows = Array.from(table.children[0].children);
   if (rows[1].children.length === 1) {
     return sales;
@@ -69,10 +75,15 @@ async function parseAssessmentData(data: Document) {
   const table: HTMLTableElement = Array.from(
     data.querySelectorAll('table'),
   ).filter(b =>
-    b.children[0].children[0].children[0].children[0].innerHTML.match(
-      /Assessment Date/,
-    ),
+    b.querySelector('.dataheader').innerHTML.match(/Assessment Date/),
   )[0];
+
+  const noData = Array.from(table.querySelectorAll('.dataheader')).some(b => {
+    b.innerHTML.match(/No Prior Assessment Data Was Found/);
+  });
+  if (noData) {
+    return undefined;
+  }
   const rows = Array.from(table.children[0].children);
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i].children;
