@@ -93,8 +93,19 @@ async function parseAssessmentData(data: Document) {
   const rows = Array.from(table.children[0].children);
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i].children;
-    const date = row[0].children[0].innerHTML;
-    const [month, year] = date.split('/').map(s => +s) as [number, number];
+    const date = row[0].children[0].innerHTML
+      .match(/(\d+)\/(\d+)/)
+      ?.slice(1)
+      .map(s => +s);
+    if (
+      !date ||
+      date.length !== 2 ||
+      typeof date[0] !== 'number' ||
+      typeof date[1] !== 'number'
+    ) {
+      throw new Error(`Invalid date: ${JSON.stringify(date)}`);
+    }
+    const [month, year] = date as [number, number];
     assessments.push({
       month,
       year,
