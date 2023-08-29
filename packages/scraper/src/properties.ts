@@ -135,9 +135,9 @@ export async function parsePropertyDetails(account: string): Promise<Property> {
 
   let lotSize: number | null;
   const findLotSize: string[] | null = rawHTML.match(
-    /Lot Size \(Sq\. Ft\.\):(?:<\/span>)?\s?((\d+,?)+)/,
+    /Lot Size \(Sq\. Ft\.\):(?:<\/span>)?\s?((?:\d+,?)+)/,
   );
-  if (findLotSize) lotSize = +findLotSize[1].replace(',', '');
+  if (findLotSize) lotSize = +findLotSize[1].replace(/,/g, '');
 
   let yearBuilt: number | null;
   const findYearBuilt: string[] | null = rawHTML.match(
