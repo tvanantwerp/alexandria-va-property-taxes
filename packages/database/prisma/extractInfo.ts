@@ -4,11 +4,11 @@ import { resolve } from 'path';
 
 const db = new PrismaClient();
 
-interface transaction {
+interface Transaction {
   streetNumber: string;
   street: string;
-  lot: number;
-  livingArea: number;
+  lotSize: number | null;
+  livingArea: number | null;
   price: number;
   year: number;
 }
@@ -31,28 +31,37 @@ async function getAssessments(id: string) {
   });
 }
 
-async function getData(): Promise<string[]> {
+async function getStudyGroupData(): Promise<string[]> {
   let sales = 'number,street,year,price,lot,livingArea\n';
   let assessments = 'number,street,year,price,lot,livingArea\n';
+
+  if (!process.env.STUDY_GROUP) {
+    throw new Error('No study group specified in .env file.');
+  }
 
   const studyGroup = await db.studyGroup.findUnique({
     where: {
       studyGroupID: +process.env.STUDY_GROUP,
     },
   });
+
+  if (!studyGroup) {
+    throw new Error('Study group not found.');
+  }
+
   const properties = await db.property.findMany({
     where: {
       studyGroupId: studyGroup.id,
     },
   });
-  const salesDB: transaction[] = [];
+  const salesDB: Transaction[] = [];
   for (const property of properties) {
     const pSales = await getSales(property.id);
     const formattedSales = pSales.map(a => {
-      const record: transaction = {
+      const record: Transaction = {
         streetNumber: property.streetNumber,
         street: property.streetName,
-        lot: property.lotSize,
+        lotSize: property.lotSize,
         livingArea: property.livingArea,
         price: a.price,
         year: a.year,
@@ -62,14 +71,14 @@ async function getData(): Promise<string[]> {
     formattedSales.forEach(s => salesDB.push(s));
   }
 
-  const assessmentsDB: transaction[] = [];
+  const assessmentsDB: Transaction[] = [];
   for (const property of properties) {
     const pAssessments = await getAssessments(property.id);
     const formattedAssessments = pAssessments.map(a => {
-      const record: transaction = {
+      const record: Transaction = {
         streetNumber: property.streetNumber,
         street: property.streetName,
-        lot: property.lotSize,
+        lotSize: property.lotSize,
         livingArea: property.livingArea,
         price: a.land + a.building,
         year: a.year,
@@ -80,17 +89,17 @@ async function getData(): Promise<string[]> {
   }
 
   salesDB.forEach(sale => {
-    sales += `${sale.streetNumber},${sale.street},${sale.year},${sale.price},${sale.lot},${sale.livingArea}\n`;
+    sales += `${sale.streetNumber},${sale.street},${sale.year},${sale.price},${sale.lotSize},${sale.livingArea}\n`;
   });
   assessmentsDB.forEach(assessment => {
-    assessments += `${assessment.streetNumber},${assessment.street},${assessment.year},${assessment.price},${assessment.lot},${assessment.livingArea}\n`;
+    assessments += `${assessment.streetNumber},${assessment.street},${assessment.year},${assessment.price},${assessment.lotSize},${assessment.livingArea}\n`;
   });
 
   return [sales, assessments];
 }
 
 async function writeData() {
-  const [sales, assessments] = await getData();
+  const [sales, assessments] = await getStudyGroupData();
 
   writeFile(
     resolve(__dirname, '../../../data/sales.csv'),
