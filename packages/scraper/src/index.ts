@@ -27,12 +27,14 @@ async function getProperties(accounts: string[]) {
       );
       count++;
       const property = await parsePropertyDetails(account);
-      if (property) {
+      if (property && property.studyGroup) {
         if (property.studyGroup in studyGroups) {
           studyGroups[property.studyGroup].push(+account);
         } else {
           studyGroups[property.studyGroup] = [+account];
         }
+      }
+      if (property && property.type) {
         if (property.type in propertyTypes) {
           propertyTypes[property.type] += 1;
         } else {
