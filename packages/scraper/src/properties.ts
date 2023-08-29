@@ -24,7 +24,7 @@ export interface Property {
   type: string;
   studyGroup: number;
   description: string;
-  lotSize: number;
+  lotSize?: number;
   yearBuilt?: number;
   buildingType?: string;
   livingArea?: number;
@@ -133,11 +133,15 @@ export async function parsePropertyDetails(account: string): Promise<Property> {
     .querySelector('div.data:nth-child(9)')
     .innerHTML.replace(/(\n|\t|\r)/g, '');
 
-  let lotSize: number | null;
+  let lotSize: number | undefined;
   const findLotSize: string[] | null = rawHTML.match(
     /Lot Size \(Sq\. Ft\.\):(?:<\/span>)?\s?((?:\d+,?)+)/,
   );
-  if (findLotSize) lotSize = +findLotSize[1].replace(/,/g, '');
+  if (findLotSize) {
+    lotSize = +findLotSize[1].replace(/,/g, '');
+  } else {
+    lotSize = undefined;
+  }
 
   let yearBuilt: number | null;
   const findYearBuilt: string[] | null = rawHTML.match(

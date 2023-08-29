@@ -16,7 +16,7 @@ model Property {
   streetNumber     String
   streetName       String
   description      String
-  lotSize          Int
+  lotSize          Int?
   yearBuilt        Int?
   buildingType     String?
   livingArea       Int?
