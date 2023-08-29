@@ -5,7 +5,7 @@ export interface Assessment {
   year: number;
   land: number;
   building: number;
-  total: string;
+  total: number;
 }
 
 export interface Sale {
@@ -97,7 +97,7 @@ async function parseAssessmentData(data: Document) {
       building: +row[2]
         .querySelector('div')
         .innerHTML.replace(/(?:&nbsp;|\$|,)/g, ''),
-      total: row[3].querySelector('div').innerHTML.replace(/&nbsp;/g, ''),
+      total: +row[3].querySelector('div').innerHTML.replace(/&nbsp;|\$|,/g, ''),
     });
   }
   return assessments;
