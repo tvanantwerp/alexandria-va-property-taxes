@@ -12,7 +12,7 @@ datasource db {
 
 model Property {
   id               String        @id @default(uuid())
-  account          Int
+  account          Int           @unique
   streetNumber     String
   streetName       String
   description      String

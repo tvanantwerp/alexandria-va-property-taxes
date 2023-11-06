@@ -15,6 +15,7 @@ async function getProperties(): Promise<Property[]> {
 }
 
 async function createProperty(property: Property) {
+  const errors = [];
   try {
     if (property) {
       await db.property.create({
@@ -74,8 +75,10 @@ async function createProperty(property: Property) {
       });
     }
   } catch (error) {
-    console.error(error, property);
+    errors.push({ error, property });
   }
+
+  console.error(errors);
 }
 
 async function loadData() {

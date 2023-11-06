@@ -7,6 +7,7 @@
   "sideEffects": false,
   "scripts": {
     "dev": "ts-node-dev --no-notify --respawn --transpile-only src/server",
+    "exportDelRaySales": "ts-node prisma/delRayLatestSales.ts",
     "exportData": "ts-node prisma/extractInfo.ts",
     "db": "npm run db:deleteDatabase && npm run db:prepDatabase && npm run db:loadData",
     "db:loadData": "ts-node prisma/loadData.ts",

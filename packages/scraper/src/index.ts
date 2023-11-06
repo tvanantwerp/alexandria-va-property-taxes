@@ -9,7 +9,7 @@ async function getProperties(accounts: string[]) {
   let count = 1;
   const studyGroups: { [index: number]: number[] } = {};
   const propertyTypes: { [index: string]: number } = {};
-  const { results, errors } = await PromisePool.withConcurrency(5)
+  const { results, errors } = await PromisePool.withConcurrency(20)
     .for(accounts)
     .handleError(async (error, account, pool) => {
       if (error) {
