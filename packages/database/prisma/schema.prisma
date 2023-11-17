@@ -15,6 +15,7 @@ model Property {
   account          Int
   streetNumber     String
   streetName       String
+  owner            String
   description      String
   lotSize          Int?
   yearBuilt        Int?
@@ -52,6 +53,8 @@ model Sale {
   day          Int
   month        Int
   year         Int
+  grantee      String
+  grantor      String
 }
 
 model StudyGroup {
