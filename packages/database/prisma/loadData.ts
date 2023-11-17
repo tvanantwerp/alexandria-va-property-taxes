@@ -22,6 +22,7 @@ async function createProperty(property: Property) {
           account: property.account,
           streetNumber: property.streetNumber,
           streetName: property.streetName,
+          owner: property.owner,
           description: property.description,
           lotSize: property.lotSize,
           yearBuilt: property.yearBuilt,
@@ -65,8 +66,26 @@ async function createProperty(property: Property) {
           },
           sales: {
             create: property.sales.map(
-              ({ id, purchaseCode, price, day, month, year }) => {
-                return { saleId: id, purchaseCode, price, day, month, year };
+              ({
+                id,
+                purchaseCode,
+                price,
+                day,
+                month,
+                year,
+                grantee,
+                grantor,
+              }) => {
+                return {
+                  saleId: id,
+                  purchaseCode,
+                  price,
+                  day,
+                  month,
+                  year,
+                  grantee,
+                  grantor,
+                };
               },
             ),
           },

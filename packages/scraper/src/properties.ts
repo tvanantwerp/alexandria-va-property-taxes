@@ -224,7 +224,7 @@ export async function parsePropertyDetails(
 
   const result: Property = {
     account: +account,
-    owner: sales[0].grantor,
+    owner: sales.length >= 1 ? sales[0].grantor : '',
     streetNumber,
     streetName,
     type,
