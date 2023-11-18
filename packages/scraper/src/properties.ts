@@ -15,6 +15,8 @@ export interface Sale {
   year: number;
   purchaseCode: string;
   price: number;
+  grantor: string;
+  grantee: string;
 }
 
 type SaleDate = [number, number, number];
@@ -23,6 +25,7 @@ export interface Property {
   account: number;
   streetNumber: string;
   streetName: string;
+  owner: string;
   type: string;
   studyGroup: number;
   description: string;
@@ -70,6 +73,8 @@ async function parseSalesData(data: Document) {
         .querySelector('div')!
         .innerHTML.replace(/(?:&nbsp;|\$|,)/g, ''),
       purchaseCode: row[4].querySelector('a')!.innerHTML.replace(/&nbsp;/g, ''),
+      grantor: row[2].textContent ?? '',
+      grantee: row[3].textContent ?? '',
     });
   }
   return sales;
@@ -219,6 +224,7 @@ export async function parsePropertyDetails(
 
   const result: Property = {
     account: +account,
+    owner: sales.length >= 1 ? sales[0].grantee : '',
     streetNumber,
     streetName,
     type,
