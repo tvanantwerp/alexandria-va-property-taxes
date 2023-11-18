@@ -1,4 +1,4 @@
-import { PrismaClient, Property } from '@prisma/client';
+import { PrismaClient, Property, Sale } from '@prisma/client';
 import readline from 'readline';
 
 const db = new PrismaClient();
@@ -11,7 +11,21 @@ async function getRecordsWithOwner(name: string): Promise<Property[]> {
       },
     },
   });
-  return result;
+  if (result.length) {
+    return result;
+  }
+
+  const salesFallback = await db.sale.findMany({
+    where: {
+      grantee: {
+        contains: name.toUpperCase(),
+      },
+    },
+    include: {
+      property: true,
+    },
+  });
+  return salesFallback.map(s => s.property);
 }
 
 async function search() {
