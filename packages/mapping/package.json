@@ -1,0 +1,15 @@
+{
+  "name": "mapping",
+  "version": "0.0.1",
+  "description": "Map Alexandria VA property parcels with assessment data.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "download": "tsx ./src/download-parcels.ts"
+  },
+  "dependencies": {
+    "axios": "^1.13.6",
+    "topojson-server": "^3.0.1",
+    "tsx": "^4.21.0"
+  }
+}

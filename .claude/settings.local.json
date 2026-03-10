@@ -4,7 +4,10 @@
       "Bash(yarn tsc:*)",
       "Bash(npx prisma generate:*)",
       "Bash(yarn workspace database prisma generate:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(yarn download-parcels:*)",
+      "Bash(yarn install:*)",
+      "Bash(yarn download:*)"
     ]
   }
 }

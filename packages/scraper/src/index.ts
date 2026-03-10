@@ -5,34 +5,65 @@ import { resolve } from 'path';
 import { getAccountNumbers } from './accounts';
 import { parsePropertyDetails } from './properties';
 
+interface ScrapeError {
+  account: string;
+  error: string;
+  stack?: string;
+  timestamp: string;
+}
+
+interface SkippedAccount {
+  account: string;
+  reason: 'invalid' | 'sub-parcel' | 'no-data';
+  timestamp: string;
+}
+
 async function getProperties(accounts: string[]) {
   let count = 1;
   const studyGroups: Record<number, number[]> = {};
   const propertyTypes: Record<string, number> = {};
+  const scrapeErrors: ScrapeError[] = [];
+  const skippedAccounts: SkippedAccount[] = [];
+
   const { results, errors } = await PromisePool.withConcurrency(5)
     .for(accounts)
-    .handleError((error, account, pool) => {
-      console.error(
-        'Experienced an error while getting properties.',
-        error,
+    .handleError((error, account) => {
+      const scrapeError: ScrapeError = {
         account,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        timestamp: new Date().toISOString(),
+      };
+      scrapeErrors.push(scrapeError);
+      console.error(
+        `Error fetching account ${account}: ${scrapeError.error}`,
       );
-      pool.stop();
     })
     .process(async account => {
       console.log(
         `Fetching account ${count.toString()} of ${accounts.length.toString()}, number ${account}.`,
       );
       count++;
-      const property = await parsePropertyDetails(account);
-      if (property?.studyGroup) {
+      const result = await parsePropertyDetails(account);
+
+      if (!result.success) {
+        skippedAccounts.push({
+          account,
+          reason: result.reason,
+          timestamp: new Date().toISOString(),
+        });
+        return undefined;
+      }
+
+      const property = result.property;
+      if (property.studyGroup) {
         if (property.studyGroup in studyGroups) {
           studyGroups[property.studyGroup]?.push(+account);
         } else {
           studyGroups[property.studyGroup] = [+account];
         }
       }
-      if (property?.type) {
+      if (property.type) {
         if (property.type in propertyTypes) {
           const current = propertyTypes[property.type];
           if (current !== undefined) {
@@ -44,14 +75,16 @@ async function getProperties(accounts: string[]) {
         return property;
       }
     });
+
   if (errors.length) {
-    console.error('Failure in getProperties', errors);
+    console.error(`\n⚠️  ${errors.length} errors occurred during scraping`);
   }
+
   const formattedStudyGroups: { group: number; accounts: number[] }[] = [];
   for (const [key, value] of Object.entries(studyGroups)) {
     formattedStudyGroups.push({ group: +key, accounts: value });
   }
-  return [results, formattedStudyGroups, propertyTypes];
+  return [results, formattedStudyGroups, propertyTypes, scrapeErrors, skippedAccounts] as const;
 }
 
 async function getAssessments() {
@@ -78,7 +111,7 @@ async function getAssessments() {
     );
   }
 
-  const [properties, studyGroups, propertyTypes] =
+  const [properties, studyGroups, propertyTypes, scrapeErrors, skippedAccounts] =
     await getProperties(accounts);
 
   console.log('Writing properties...');
@@ -107,6 +140,54 @@ async function getAssessments() {
     err => {
       if (err) console.error(err);
     },
+  );
+
+  if (scrapeErrors.length > 0) {
+    console.log('Writing scrape errors...');
+    writeFile(
+      resolve(__dirname, '../../../data/scrape-errors.json'),
+      JSON.stringify(scrapeErrors, null, 2),
+      { encoding: 'utf8' },
+      err => {
+        if (err) console.error(err);
+        else {
+          console.log(
+            `❌ ${scrapeErrors.length} accounts had errors. Details saved to data/scrape-errors.json`,
+          );
+        }
+      },
+    );
+  }
+
+  if (skippedAccounts.length > 0) {
+    console.log('Writing skipped accounts...');
+    writeFile(
+      resolve(__dirname, '../../../data/skipped-accounts.json'),
+      JSON.stringify(skippedAccounts, null, 2),
+      { encoding: 'utf8' },
+      err => {
+        if (err) console.error(err);
+        else {
+          const reasonCounts = skippedAccounts.reduce(
+            (acc, skip) => {
+              acc[skip.reason] = (acc[skip.reason] || 0) + 1;
+              return acc;
+            },
+            {} as Record<string, number>,
+          );
+          const reasonSummary = Object.entries(reasonCounts)
+            .map(([reason, count]) => `${count} ${reason}`)
+            .join(', ');
+          console.log(
+            `⏭️  ${skippedAccounts.length} accounts skipped (${reasonSummary}). Details saved to data/skipped-accounts.json`,
+          );
+        }
+      },
+    );
+  }
+
+  console.log(
+    `\n✅ Scraping complete: ${properties.length} properties scraped, ${skippedAccounts.length} skipped, ${scrapeErrors.length} errors`,
   );
   console.log('Done!');
 }

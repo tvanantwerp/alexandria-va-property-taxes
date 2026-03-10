@@ -41,6 +41,10 @@ export interface Property {
   sales: Sale[];
 }
 
+export type PropertyResult =
+  | { success: true; property: Property }
+  | { success: false; reason: 'invalid' | 'sub-parcel' | 'no-data' };
+
 // Get data for a given label
 function getDataByLabel(doc: Document, label: string): string {
   const headers = doc.querySelectorAll('span.dataheader, div.dataheader');
@@ -171,13 +175,16 @@ function parseAssessmentData(data: Document) {
 
 export async function parsePropertyDetails(
   account: string,
-): Promise<Property | undefined> {
+): Promise<PropertyResult> {
   const page = await fetchPageData(
     `${BASE_URL}detail.php?accountno=${account}`,
   );
   const rawHTML = page.querySelector('#coa_rea_main')?.innerHTML;
   if (!rawHTML) {
-    throw new Error('No raw HTML found - page may not have loaded correctly');
+    console.log(
+      `Skipping account ${account} - no main content found (page load issue)`,
+    );
+    return { success: false, reason: 'no-data' };
   }
 
   // Check if we got an error page, incomplete response, or invalid account
@@ -185,16 +192,17 @@ export async function parsePropertyDetails(
     page.querySelectorAll('span.dataheader, div.dataheader').length > 0;
   if (!hasDataHeaders) {
     console.log(
-      `Skipping account ${account} - no data headers found (invalid account or error page)`,
+      `Skipping account ${account} - no data headers found (invalid account)`,
     );
-    return undefined;
+    return { success: false, reason: 'invalid' };
   }
   const type = getDataByLabel(page, 'Primary Property Class').replace(
     /(\n|\t|\r)/g,
     '',
   );
   if (type && /(SUB-PARCEL)/.exec(type)) {
-    return;
+    console.log(`Skipping account ${account} - SUB-PARCEL property`);
+    return { success: false, reason: 'sub-parcel' };
   }
   const studyGroupString = getDataByLabel(page, 'Study Group');
   const studyGroup: number = +studyGroupString;
@@ -292,5 +300,5 @@ export async function parsePropertyDetails(
   if (fullBaths) result.fullBaths = fullBaths;
   if (halfBaths) result.halfBaths = halfBaths;
 
-  return result;
+  return { success: true, property: result };
 }
