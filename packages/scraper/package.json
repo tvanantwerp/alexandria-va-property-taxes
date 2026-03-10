@@ -5,12 +5,12 @@
   "private": true,
   "license": "MIT",
   "dependencies": {
-    "@types/jsdom": "^16.2.14",
-    "axios": "^0.26.0",
-    "jsdom": "^19.0.0",
-    "ts-node": "^10.5.0"
+    "@types/jsdom": "^28.0.0",
+    "axios": "^1.13.6",
+    "jsdom": "^28.1.0",
+    "tsx": "^4.21.0"
   },
   "scripts": {
-    "start": "ts-node ./src/index.ts"
+    "start": "tsx ./src/index.ts"
   }
 }
