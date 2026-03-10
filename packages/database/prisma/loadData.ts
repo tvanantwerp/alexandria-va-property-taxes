@@ -2,9 +2,11 @@ import { PrismaClient } from '@prisma/client';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
 
-import { Property } from '../../scraper/src/properties';
+import type { Property } from '../../scraper/src/properties';
 
-const db = new PrismaClient();
+const db = new PrismaClient({
+  databaseUrl: 'file:./prisma/dev.db',
+});
 
 async function getProperties(): Promise<Property[]> {
   const properties = await readFile(

@@ -1,7 +1,10 @@
-import { PrismaClient, Property, Sale } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import type { Property, Sale } from '@prisma/client';
 import readline from 'readline';
 
-const db = new PrismaClient();
+const db = new PrismaClient({
+  databaseUrl: 'file:./prisma/dev.db',
+});
 
 async function getRecordsWithOwner(name: string): Promise<Property[]> {
   const result = await db.property.findMany({

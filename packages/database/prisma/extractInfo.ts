@@ -2,7 +2,9 @@ import { PrismaClient } from '@prisma/client';
 import { writeFile } from 'fs';
 import { resolve } from 'path';
 
-const db = new PrismaClient();
+const db = new PrismaClient({
+  databaseUrl: 'file:./prisma/dev.db',
+});
 
 interface Transaction {
   streetNumber: string;
