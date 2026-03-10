@@ -161,10 +161,11 @@ export async function parsePropertyDetails(
     throw new Error('No raw HTML found - page may not have loaded correctly');
   }
 
-  // Check if we got an error page or incomplete response
+  // Check if we got an error page, incomplete response, or invalid account
   const hasDataHeaders = page.querySelectorAll('span.dataheader, div.dataheader').length > 0;
   if (!hasDataHeaders) {
-    throw new Error('Page loaded but contains no data headers - possible rate limit or error page');
+    console.log(`Skipping account ${account} - no data headers found (invalid account or error page)`);
+    return undefined;
   }
   const type =
     getDataByLabel(page, 'Primary Property Class').replace(/(\n|\t|\r)/g, '') ??

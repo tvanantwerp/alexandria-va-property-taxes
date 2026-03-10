@@ -31,10 +31,10 @@ function validateCachedPage(doc: Document): boolean {
     return false;
   }
 
-  // Check that we have data headers
+  // Check that we have data headers (invalid accounts have no dataheaders at all)
   const dataHeaders = doc.querySelectorAll('span.dataheader, div.dataheader');
   if (dataHeaders.length === 0) {
-    console.log('Cache validation failed: No data headers found');
+    console.log('Cache validation failed: No data headers found (invalid account)');
     return false;
   }
 
