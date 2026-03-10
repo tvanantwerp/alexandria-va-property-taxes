@@ -34,23 +34,29 @@ function validateCachedPage(doc: Document): boolean {
   // Check that we have data headers (invalid accounts have no dataheaders at all)
   const dataHeaders = doc.querySelectorAll('span.dataheader, div.dataheader');
   if (dataHeaders.length === 0) {
-    console.log('Cache validation failed: No data headers found (invalid account)');
+    console.log(
+      'Cache validation failed: No data headers found (invalid account)',
+    );
     return false;
   }
 
   // Check that critical fields have actual values
-  const criticalFields = ['Primary Property Class', 'Study Group', 'Account Number'];
+  const criticalFields = [
+    'Primary Property Class',
+    'Study Group',
+    'Account Number',
+  ];
 
   for (const fieldName of criticalFields) {
     let found = false;
     let hasValue = false;
 
     for (const header of dataHeaders) {
-      const headerText = header.textContent?.trim().replace(/:$/, '');
+      const headerText = header.textContent.trim().replace(/:$/, '');
       if (headerText === fieldName) {
         found = true;
         const valueElement = header.nextElementSibling;
-        const value = valueElement?.textContent?.trim();
+        const value = valueElement?.textContent.trim();
 
         if (value && value.length > 0) {
           hasValue = true;
@@ -99,9 +105,9 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
   // Fetch fresh data (either no cache or cache validation failed)
   {
     count++;
-    console.log(`Fetch ${count}: I fetched ${URI} fresh`);
+    console.log(`Fetch ${count.toString()}: I fetched ${URI} fresh`);
     const HTMLData = await axios
-      .get(URI, {
+      .get<string>(URI, {
         httpAgent: new http.Agent({ keepAlive: true }),
         httpsAgent: new https.Agent({ keepAlive: true }),
       })
@@ -109,10 +115,13 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
         await sleep(300);
         return res.data;
       })
-      .catch(err => console.error(err));
+      .catch((err: unknown) => {
+        console.error(err);
+        return undefined;
+      });
 
     // Always save to cache (overwrites invalid cached data)
-    if (!ignoreCache && HTMLData) {
+    if (!ignoreCache && typeof HTMLData === 'string') {
       writeFileSync(cachePath, HTMLData, { encoding: 'utf8' });
     }
 
