@@ -158,7 +158,13 @@ export async function parsePropertyDetails(
   );
   const rawHTML = page.querySelector('#coa_rea_main')?.innerHTML;
   if (!rawHTML) {
-    throw new Error('No raw HTML found');
+    throw new Error('No raw HTML found - page may not have loaded correctly');
+  }
+
+  // Check if we got an error page or incomplete response
+  const hasDataHeaders = page.querySelectorAll('span.dataheader, div.dataheader').length > 0;
+  if (!hasDataHeaders) {
+    throw new Error('Page loaded but contains no data headers - possible rate limit or error page');
   }
   const type =
     getDataByLabel(page, 'Primary Property Class').replace(/(\n|\t|\r)/g, '') ??
