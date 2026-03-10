@@ -48,8 +48,8 @@ export async function fetchPageData(URI: string, ignoreCache = false) {
         httpAgent: new http.Agent({ keepAlive: true }),
         httpsAgent: new https.Agent({ keepAlive: true }),
       })
-      .then(res => {
-        sleep(300);
+      .then(async res => {
+        await sleep(300);
         return res.data;
       })
       .catch(err => console.error(err));
