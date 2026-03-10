@@ -41,6 +41,28 @@ export interface Property {
   sales: Sale[];
 }
 
+// Get data for a given label
+function getDataByLabel(doc: Document, label: string): string {
+  const headers = doc.querySelectorAll('span.dataheader, div.dataheader');
+
+  for (const el of headers) {
+    if (el.textContent?.trim().replace(/:$/, '') === label) {
+      const result = el.nextElementSibling?.textContent?.trim();
+      if (!result) throw new Error(`Could not retrieve value for ${label}`);
+      return result;
+    }
+  }
+
+  // Log available headers to help debug
+  const availableHeaders = Array.from(headers)
+    .map(el => el.textContent?.trim().replace(/:$/, ''))
+    .filter(Boolean);
+
+  throw new Error(
+    `Could not find ${label} on the page. Available headers: ${availableHeaders.join(', ')}`
+  );
+}
+
 async function parseSalesData(data: Document) {
   const sales: Sale[] = [];
   const table: HTMLTableElement = Array.from(
@@ -139,17 +161,12 @@ export async function parsePropertyDetails(
     throw new Error('No raw HTML found');
   }
   const type =
-    page
-      .querySelector(
-        '#coa_rea_main > table:nth-of-type(1) > tbody > tr:nth-child(1) > td:nth-child(1) > span:nth-child(5)',
-      )
-      ?.innerHTML.replace(/(\n|\t|\r)/g, '') ?? '';
+    getDataByLabel(page, 'Primary Property Class').replace(/(\n|\t|\r)/g, '') ??
+    '';
   if (type && type.match(/(SUB-PARCEL)/)) {
     return;
   }
-  const studyGroupString = page.querySelector(
-    '#coa_rea_main > table:nth-of-type(1) > tbody > tr:nth-child(1) > td:nth-child(2) > span:nth-child(5)',
-  )!.innerHTML;
+  const studyGroupString = getDataByLabel(page, 'Study Group');
   const studyGroup: number = +studyGroupString;
   const address = page
     .querySelector('h3.notranslate')
