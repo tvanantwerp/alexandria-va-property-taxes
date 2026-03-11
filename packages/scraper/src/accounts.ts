@@ -20,7 +20,7 @@ async function parsePageData(
       }
     });
     pages = pages
-      .filter(link => !link.includes('&CPage=0') && !link.includes('%5'))
+      .filter(link => !link.includes('%5'))
       .sort();
 
     const allPages = await Promise.all(
