@@ -7,7 +7,10 @@
       "Bash(npx eslint:*)",
       "Bash(yarn download-parcels:*)",
       "Bash(yarn install:*)",
-      "Bash(yarn download:*)"
+      "Bash(yarn download:*)",
+      "Bash(yarn generate-tiles)",
+      "Bash(yarn convert-pmtiles:*)",
+      "Bash(yarn viewer:*)"
     ]
   }
 }

@@ -5,11 +5,23 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "download": "tsx ./src/download-parcels.ts"
+    "download": "tsx ./src/download-parcels.ts",
+    "generate-tiles": "tsx ./src/generate-tiles.ts",
+    "extract-tiles": "tsx ./src/extract-tiles.ts",
+    "convert-pmtiles": "tsx ./src/convert-to-pmtiles.ts",
+    "serve": "tsx ./src/serve-tiles.ts",
+    "viewer": "tsx ./src/viewer.ts"
   },
   "dependencies": {
+    "@mapbox/mbtiles": "^0.12.1",
     "axios": "^1.13.6",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
     "topojson-server": "^3.0.1",
     "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0"
   }
 }
