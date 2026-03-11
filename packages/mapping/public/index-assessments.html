@@ -58,6 +58,7 @@
   <div id="map"></div>
   <div id="info">
     <h3>Alexandria Property Assessments</h3>
+    <div id="zoom-level" style="font-size: 12px; color: #666; margin-bottom: 5px;">Zoom: --</div>
     <div id="parcel-info">Click on a parcel to see assessment changes</div>
   </div>
   <div id="legend">
@@ -134,7 +135,15 @@
             'source-layer': 'parcels',
             paint: {
               'line-color': '#333',
-              'line-width': 0.5
+              'line-width': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                13, 0,      // Invisible below zoom 14
+                14, 0.5,    // Start appearing at zoom 14
+                16, 1,      // Full width at zoom 16
+                18, 2       // Thicker when very zoomed in
+              ]
             }
           }
         ]
@@ -188,7 +197,16 @@
 
     map.on('load', () => {
       console.log('Map loaded successfully');
+      updateZoomLevel();
     });
+
+    // Update zoom level display
+    function updateZoomLevel() {
+      const zoom = map.getZoom().toFixed(2);
+      document.getElementById('zoom-level').textContent = `Zoom: ${zoom}`;
+    }
+
+    map.on('zoom', updateZoomLevel);
   </script>
 </body>
 </html>

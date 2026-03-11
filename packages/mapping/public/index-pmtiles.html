@@ -82,7 +82,15 @@
             'source-layer': 'parcels',
             paint: {
               'line-color': '#066',
-              'line-width': 1
+              'line-width': [
+                'interpolate',
+                ['linear'],
+                ['zoom'],
+                13, 0,      // Invisible below zoom 14
+                14, 0.5,    // Start appearing at zoom 14
+                16, 1,      // Full width at zoom 16
+                18, 2       // Thicker when very zoomed in
+              ]
             }
           }
         ]

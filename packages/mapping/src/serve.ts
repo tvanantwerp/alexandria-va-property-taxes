@@ -40,6 +40,12 @@ const server = createServer(async (req, res) => {
 
   let filePath = req.url || '/';
 
+  // Strip query string from URL
+  const queryIndex = filePath.indexOf('?');
+  if (queryIndex !== -1) {
+    filePath = filePath.substring(0, queryIndex);
+  }
+
   // Default to index.html
   if (filePath === '/') {
     filePath = '/index-assessments.html';
