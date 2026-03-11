@@ -6,8 +6,8 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 const DATA_DIR = join(__dirname, '../../../data');
-const MBTILES_FILE = join(DATA_DIR, 'alexandria-parcels.mbtiles');
-const PMTILES_FILE = join(DATA_DIR, 'alexandria-parcels.pmtiles');
+const MBTILES_FILE = join(DATA_DIR, 'alexandria-parcels-enriched.mbtiles');
+const PMTILES_FILE = join(DATA_DIR, 'alexandria-parcels-enriched.pmtiles');
 
 async function convertToPMTiles() {
   if (!existsSync(MBTILES_FILE)) {
@@ -16,9 +16,7 @@ async function convertToPMTiles() {
   }
 
   if (existsSync(PMTILES_FILE)) {
-    console.log('PMTiles file already exists at:', PMTILES_FILE);
-    console.log('Delete it to regenerate.');
-    return;
+    console.log('Existing PMTiles file will be overwritten:', PMTILES_FILE);
   }
 
   console.log('Converting MBTiles to PMTiles...');
@@ -35,7 +33,7 @@ async function convertToPMTiles() {
   }
 
   try {
-    const command = `pmtiles convert ${MBTILES_FILE} ${PMTILES_FILE}`;
+    const command = `pmtiles convert --force ${MBTILES_FILE} ${PMTILES_FILE}`;
 
     console.log('Running:', command, '\n');
 

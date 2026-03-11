@@ -2,7 +2,7 @@ import { PromisePool } from '@supercharge/promise-pool';
 import { existsSync, readFileSync, writeFile } from 'fs';
 import { resolve } from 'path';
 
-import { getAccountNumbers } from './accounts';
+import { getAccountNumbersFromGeoJSON } from './accounts-from-geojson';
 import { parsePropertyDetails } from './properties';
 
 interface ScrapeError {
@@ -97,10 +97,10 @@ async function getAssessments() {
       }),
     ) as string[];
   } else {
-    console.log('Scraping to get list of accounts...');
-    accounts = await getAccountNumbers();
+    console.log('Extracting account numbers from GeoJSON...');
+    accounts = getAccountNumbersFromGeoJSON();
 
-    console.log('Saving scraped list of accounts...');
+    console.log('Saving account numbers list...');
     writeFile(
       resolve(__dirname, '../../../data/accounts.json'),
       JSON.stringify(accounts),

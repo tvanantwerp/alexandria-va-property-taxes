@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Alexandria Property Assessments</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <link href="https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.css" rel="stylesheet">
+  <script src="https://unpkg.com/maplibre-gl@4.0.0/dist/maplibre-gl.js"></script>
+  <script src="https://unpkg.com/pmtiles@3.0.7/dist/pmtiles.js"></script>
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: sans-serif;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      z-index: 1;
+      max-width: 300px;
+    }
+    #info h3 { margin: 0 0 10px 0; }
+    #parcel-info { font-size: 13px; line-height: 1.5; }
+    #legend {
+      position: absolute;
+      bottom: 30px;
+      right: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: sans-serif;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      z-index: 1;
+    }
+    #legend h4 { margin: 0 0 8px 0; font-size: 12px; }
+    .legend-gradient {
+      width: 200px;
+      height: 20px;
+      background: linear-gradient(to right,
+        rgb(0, 0, 255),
+        rgb(255, 255, 255),
+        rgb(255, 0, 0)
+      );
+      border: 1px solid #ccc;
+    }
+    .legend-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="info">
+    <h3>Alexandria Property Assessments</h3>
+    <div id="parcel-info">Click on a parcel to see assessment changes</div>
+  </div>
+  <div id="legend">
+    <h4>Assessment Change (Year-over-Year)</h4>
+    <div class="legend-gradient"></div>
+    <div class="legend-labels">
+      <span>-10%</span>
+      <span>0%</span>
+      <span>+10%</span>
+    </div>
+  </div>
+
+  <script>
+    // Register PMTiles protocol
+    const protocol = new pmtiles.Protocol();
+    maplibregl.addProtocol('pmtiles', protocol.tile);
+
+    // Alexandria, VA coordinates
+    const ALEXANDRIA_CENTER = [-77.0469, 38.8048];
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: {
+        version: 8,
+        sources: {
+          osm: {
+            type: 'raster',
+            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tileSize: 256,
+            attribution: '&copy; OpenStreetMap Contributors',
+            maxzoom: 19
+          },
+          parcels: {
+            type: 'vector',
+            url: 'pmtiles://http://localhost:3000/alexandria-parcels-enriched.pmtiles?v=' + Date.now(),
+          }
+        },
+        layers: [
+          {
+            id: 'osm',
+            type: 'raster',
+            source: 'osm'
+          },
+          {
+            id: 'parcels-fill',
+            type: 'fill',
+            source: 'parcels',
+            'source-layer': 'parcels',
+            paint: {
+              'fill-color': [
+                'case',
+                ['!=', ['get', 'assessment_change'], null],
+                // Data-driven color based on assessment change
+                [
+                  'interpolate',
+                  ['linear'],
+                  ['get', 'assessment_change'],
+                  -10, 'rgb(0, 0, 255)',    // Blue for -10%
+                  0, 'rgb(255, 255, 255)',   // White for 0%
+                  10, 'rgb(255, 0, 0)'       // Red for +10%
+                ],
+                // Check if has recent assessment but no change data
+                ['!=', ['get', 'assessment_recent_total'], null],
+                'rgb(220, 220, 220)',        // Light gray for properties with data but no change
+                'rgb(180, 180, 180)'         // Darker gray for parcels without any data
+              ],
+              'fill-opacity': 0.7
+            }
+          },
+          {
+            id: 'parcels-outline',
+            type: 'line',
+            source: 'parcels',
+            'source-layer': 'parcels',
+            paint: {
+              'line-color': '#333',
+              'line-width': 0.5
+            }
+          }
+        ]
+      },
+      center: ALEXANDRIA_CENTER,
+      zoom: 11
+    });
+
+    // Add navigation controls
+    map.addControl(new maplibregl.NavigationControl());
+
+    // Show parcel info on click
+    map.on('click', 'parcels-fill', (e) => {
+      if (e.features.length > 0) {
+        const props = e.features[0].properties;
+        const infoDiv = document.getElementById('parcel-info');
+
+        let html = `<strong>Account:</strong> ${props.ACCOUNTNO || 'N/A'}<br>`;
+        html += `<strong>Address:</strong> ${props.ADDRESS_GIS || 'N/A'}<br>`;
+        html += `<strong>Owner:</strong> ${props.OWN_NAME || 'N/A'}<br>`;
+
+        if (props.assessment_recent_total !== null && props.assessment_recent_total !== undefined) {
+          html += `<br><strong>Recent Assessment (${props.assessment_recent_year}):</strong><br>`;
+          html += `$${parseInt(props.assessment_recent_total).toLocaleString()}<br>`;
+
+          if (props.assessment_change !== null && props.assessment_change !== undefined) {
+            const change = parseFloat(props.assessment_change);
+            const changeColor = change >= 0 ? 'red' : 'blue';
+            html += `<br><strong>Year-over-Year Change:</strong><br>`;
+            html += `<span style="color: ${changeColor}; font-weight: bold;">${change > 0 ? '+' : ''}${change.toFixed(2)}%</span><br>`;
+            html += `${props.assessment_previous_year}: $${parseInt(props.assessment_previous_total).toLocaleString()}`;
+          } else {
+            html += '<br><em>Only one year of data available</em>';
+          }
+        } else {
+          html += '<br><em>No assessment data available</em>';
+        }
+
+        infoDiv.innerHTML = html;
+      }
+    });
+
+    // Change cursor on hover
+    map.on('mouseenter', 'parcels-fill', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+
+    map.on('mouseleave', 'parcels-fill', () => {
+      map.getCanvas().style.cursor = '';
+    });
+
+    map.on('load', () => {
+      console.log('Map loaded successfully');
+    });
+  </script>
+</body>
+</html>

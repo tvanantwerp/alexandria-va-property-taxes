@@ -8,14 +8,34 @@ This is a data collection and analysis project for Alexandria, VA property tax r
 
 ## Workspace Structure
 
-This is a Yarn workspace monorepo with two packages:
+This is a Yarn workspace monorepo with three packages:
 
+- **packages/mapping**: Downloads parcel GeoJSON data from Alexandria GIS and generates map tiles
 - **packages/scraper**: Web scraper that downloads property tax data from Alexandria city government
 - **packages/database**: Prisma-based SQLite database with GraphQL API for querying the data
 
-Data flows: scraper → JSON files in `/data` directory → database loader → SQLite database
+Data flows:
+1. GIS parcel data (GeoJSON) → account numbers extraction
+2. Account numbers → scraper → property details JSON files in `/data` directory
+3. Property JSON files → database loader → SQLite database
 
 ## Development Commands
+
+### Downloading Parcel Data
+
+**First step**: Download the parcel GeoJSON from Alexandria GIS.
+
+```bash
+cd packages/mapping
+yarn download
+```
+
+This downloads the Alexandria parcels GeoJSON file to `data/alexandria-parcels.geojson`. The GeoJSON contains:
+- Parcel boundaries (geometry)
+- Account numbers (ACCOUNTNO property)
+- Basic property information (address, owner, zoning, etc.)
+
+The account numbers from this GeoJSON are used by the scraper to determine which properties to fetch detailed data for.
 
 ### Running the Scraper
 
@@ -28,10 +48,12 @@ cd packages/scraper && ts-node ./src/index.ts
 ```
 
 The scraper:
-1. Fetches account numbers for all properties (or loads from cache at `data/accounts.json`)
+1. Extracts account numbers from the GeoJSON file at `data/alexandria-parcels.geojson` (or loads from cache at `data/accounts.json`)
 2. Fetches detailed property data for each account (5 concurrent requests)
 3. Saves results to `data/properties.json`, `data/groups.json`, and `data/types.json`
 4. Uses file-based caching in `.cache/` directory (base64-encoded URLs as filenames)
+
+**Note**: The scraper requires the parcel GeoJSON to be downloaded first. Run `cd packages/mapping && yarn download` before running the scraper.
 
 ### Database Operations
 
@@ -72,10 +94,11 @@ Pre-commit hooks (husky + lint-staged) automatically run linting and formatting 
 
 The scraper uses a caching strategy to avoid re-fetching data:
 
-1. **Account collection** (`accounts.ts`):
-   - Searches all street names (from `streets.ts`) using city search tool
-   - Parses pagination to collect all account numbers
-   - Uses `@supercharge/promise-pool` for concurrent requests (concurrency: 5)
+1. **Account collection** (`accounts-from-geojson.ts`):
+   - Reads the GeoJSON file at `data/alexandria-parcels.geojson`
+   - Extracts the `ACCOUNTNO` property from each parcel feature
+   - Returns unique account numbers (removes duplicates)
+   - **Deprecated**: The old `accounts.ts` used web scraping to search street names and parse pagination, but this method was incomplete and has been replaced
 
 2. **Property details** (`properties.ts`):
    - Fetches individual property pages by account number

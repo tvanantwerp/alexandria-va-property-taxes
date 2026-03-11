@@ -6,19 +6,18 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 const DATA_DIR = join(__dirname, '../../../data');
-const GEOJSON_FILE = join(DATA_DIR, 'alexandria-parcels.geojson');
-const TILES_FILE = join(DATA_DIR, 'alexandria-parcels.mbtiles');
+const GEOJSON_FILE = join(DATA_DIR, 'alexandria-parcels-enriched.geojson');
+const TILES_FILE = join(DATA_DIR, 'alexandria-parcels-enriched.mbtiles');
 
 async function generateTiles() {
   if (!existsSync(GEOJSON_FILE)) {
-    console.error('GeoJSON file not found. Run "yarn download" first.');
+    console.error('Enriched GeoJSON file not found.');
+    console.error('Run "yarn enrich-geojson" first.');
     process.exit(1);
   }
 
   if (existsSync(TILES_FILE)) {
-    console.log('Tiles file already exists at:', TILES_FILE);
-    console.log('Delete it to regenerate.');
-    return;
+    console.log('Existing tiles file will be overwritten:', TILES_FILE);
   }
 
   console.log('Generating vector tiles with tippecanoe...');
@@ -39,10 +38,13 @@ async function generateTiles() {
     const command = [
       'tippecanoe',
       '-o', TILES_FILE,
+      '--force', // Overwrite existing file
+      '--no-feature-limit', // Don't limit features per tile
+      '--no-tile-size-limit', // Don't limit tile sizes
       '--drop-densest-as-needed', // Drop features when tile is too dense
       '--extend-zooms-if-still-dropping', // Add zoom levels if needed
       '-Z8', // Minimum zoom level
-      '-z14', // Maximum zoom level
+      '-z15', // Maximum zoom level (increased from 14)
       '--layer=parcels',
       '--name="Alexandria Parcels"',
       '--attribution="City of Alexandria, VA"',
@@ -60,9 +62,7 @@ async function generateTiles() {
 
     console.log('\nVector tiles generated successfully!');
     console.log('File saved to:', TILES_FILE);
-    console.log('\nNext steps:');
-    console.log('1. Start the tile server: yarn serve');
-    console.log('2. Open the viewer: yarn viewer');
+    console.log('\nNext step: yarn convert-pmtiles');
   } catch (error) {
     console.error('Error generating tiles:', error);
     throw error;

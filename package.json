@@ -11,7 +11,9 @@
   "scripts": {
     "scrape": "yarn workspace scraper start",
     "db": "yarn workspace database db",
-    "download-parcels": "yarn workspace mapping download"
+    "download-parcels": "yarn workspace mapping download",
+    "prep-map-tiles": "yarn workspace mapping prep-map-tiles",
+    "serve": "yarn workspace mapping serve"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

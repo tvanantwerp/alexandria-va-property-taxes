@@ -1,186 +1,195 @@
 # Alexandria Property Mapping
 
-Interactive map viewer for Alexandria, VA property parcels using vector tiles.
+Generate PMTiles files for static hosting of Alexandria, VA property parcels with assessment data.
 
 ## Prerequisites
 
-Install tippecanoe (vector tile generator):
+Install required tools:
 
 ```bash
 # macOS
 brew install tippecanoe
 
+# Install PMTiles CLI globally
+npm install -g pmtiles
+
 # Linux - see https://github.com/felt/tippecanoe#installation
 ```
 
-## Setup
+## Overview
 
-### 1. Download parcel data
+This package generates map tiles from Alexandria's parcel data enriched with property tax assessment information. The output is a single PMTiles file that can be hosted statically (no backend server required).
+
+**Data flow:**
+```
+1. Download parcel GeoJSON from Alexandria GIS
+2. Extract assessment changes from your database
+3. Enrich GeoJSON with assessment data
+4. Generate MBTiles with tippecanoe
+5. Convert to PMTiles for static hosting
+```
+
+## Usage
+
+After you've finished scraping and populating the database in the other packages, follow these steps:
+
+### 1. Download Parcel Data
+
+Download the parcel boundaries from Alexandria's GIS portal:
 
 ```bash
 yarn download
 ```
 
-Downloads GeoJSON from Alexandria's open data portal and converts to TopoJSON.
+This downloads `data/alexandria-parcels.geojson` (~133 MB) containing parcel geometries, addresses, and account numbers.
 
-### 2. Generate vector tiles
+### 2. Generate Assessment Data
+
+Extract assessment changes from your database:
+
+```bash
+yarn generate-assessment-data
+```
+
+This queries the SQLite database and generates `public/assessment-changes.json` with:
+- Recent and previous year assessments
+- Percent change calculations
+- Total assessed values
+
+**Note:** Requires the database at `packages/database/prisma/prisma/dev.db` to be populated with scraped data.
+
+### 3. Enrich GeoJSON
+
+Merge assessment data into the parcel GeoJSON:
+
+```bash
+yarn enrich-geojson
+```
+
+This creates `data/alexandria-parcels-enriched.geojson` with assessment properties added to each parcel.
+
+### 4. Generate Vector Tiles
+
+Create an MBTiles file using tippecanoe:
 
 ```bash
 yarn generate-tiles
 ```
 
-Creates an MBTiles file with zoom levels 8-14. Takes 2-5 minutes.
+This processes the enriched GeoJSON and creates `data/alexandria-parcels-enriched.mbtiles` (~20-40 MB). Takes 2-5 minutes.
 
-### 3. Choose Your Deployment Strategy
+**Zoom levels:** 8-14 (city level to individual parcels)
 
-You have **three options** for serving tiles:
+### 5. Convert to PMTiles
 
----
-
-## Option A: Static Hosting with PMTiles (Recommended)
-
-**Best for**: Production deployment without a backend
-
-PMTiles is a single file format designed for static hosting. It uses HTTP range requests so the browser only downloads needed tiles.
+Convert MBTiles to PMTiles format for static hosting:
 
 ```bash
-# Install PMTiles CLI
-npm install -g pmtiles
-
-# Convert MBTiles to PMTiles
 yarn convert-pmtiles
 ```
 
-**Deploy:**
-1. Copy `data/alexandria-parcels.pmtiles` to your static host (Vercel, Netlify, S3, GitHub Pages, etc.)
-2. Copy `public/index-pmtiles.html` to your host as `index.html`
-3. Update the PMTiles URL in the HTML file to point to your hosted `.pmtiles` file
+This creates `data/alexandria-parcels-enriched.pmtiles` ready for deployment.
 
-**Pros:**
-- No backend server needed
-- Single file deployment
-- Works with any static host
-- Automatic range requests
-- CDN-friendly
+### All-in-One Script
 
-**Cons:**
-- Requires HTTP range request support (most hosts support this)
-
----
-
-## Option B: Static Hosting with Individual Tile Files
-
-**Best for**: Maximum compatibility with simple static hosts
-
-Extracts tiles into individual `.pbf` files that can be served as static files.
+Run all tile preparation steps in sequence:
 
 ```bash
-yarn extract-tiles
+yarn prep-map-tiles
 ```
 
-This creates a `public/tiles/{z}/{x}/{y}.pbf` directory structure.
+This is equivalent to running steps 2-5 above.
 
-**Deploy:**
-1. Copy the entire `public/` directory to your static host
-2. The viewer at `public/index.html` will work automatically
+## Local Development
 
-**Pros:**
-- Works with any static file host
-- No special requirements
-- Can be served from `file://` protocol for local testing
-
-**Cons:**
-- Creates thousands of individual files
-- Takes longer to extract (~5-10 minutes)
-- Larger deployment size
-
----
-
-## Option C: Dynamic Backend Server
-
-**Best for**: Local development and testing
-
-Serves tiles from the MBTiles database on-demand.
+View the map locally during development:
 
 ```bash
-# Terminal 1: Start tile server
 yarn serve
-
-# Terminal 2: Start viewer
-yarn viewer
-
-# Open http://localhost:3000
 ```
 
-**Pros:**
-- Quick to set up for development
-- Single MBTiles file
-- Easy to update data
+This starts a development server at `http://localhost:3000` that serves:
+- The HTML map viewers from `public/`
+- The PMTiles files from `data/`
+- Supports HTTP range requests for PMTiles
 
-**Cons:**
-- Requires a Node.js server
-- Not suitable for static hosting
-- Needs to handle concurrent requests
+Available viewers:
+- `http://localhost:3000/index-assessments.html` - Map with assessment data (default)
+- `http://localhost:3000/index-pmtiles.html` - Basic PMTiles viewer
+- `http://localhost:3000/index.html` - Standard viewer
 
----
+## Deployment
 
-## Comparison
+PMTiles files can be hosted on any static file host that supports HTTP range requests (most do):
 
-| Feature | PMTiles | Extracted Files | Backend Server |
-|---------|---------|-----------------|----------------|
-| Backend required | ❌ | ❌ | ✅ |
-| Static hosting | ✅ | ✅ | ❌ |
-| Setup time | Fast | Slow | Fast |
-| File count | 1 | Thousands | 1 |
-| CDN-friendly | ✅ | ✅ | ⚠️ |
-| Range requests | Required | Not needed | N/A |
+- Vercel
+- Netlify
+- Cloudflare Pages
+- AWS S3
+- GitHub Pages
+- Any CDN
 
----
+Simply upload the `.pmtiles` file and configure your map viewer to load it via the PMTiles protocol.
 
 ## How It Works
 
-### Vector Tiles Approach
+### Vector Tiles
 
-Instead of loading a 133 MB GeoJSON file, this uses vector tiles:
-
-- **Tiles**: Map divided into 256x256 pixel tiles at different zoom levels
-- **On-demand loading**: Only tiles in current viewport are loaded
-- **Zoom-based detail**: Higher zoom = more detail
-- **Binary format**: Protobuf (PBF), much more efficient than JSON
-
-### Data Flow
-
-```
-GeoJSON (133 MB)
-    ↓ tippecanoe
-MBTiles (~20-40 MB)
-    ↓ (choose one)
-    ├─ PMTiles (single file) → Static hosting
-    ├─ Extract to files → Static hosting
-    └─ Serve via Node.js → Backend server
-```
+Instead of loading the entire 133 MB GeoJSON file, vector tiles allow:
+- **On-demand loading:** Only tiles in viewport are fetched
+- **Zoom-based detail:** More detail at higher zoom levels
+- **Binary format:** Protobuf (PBF) is much smaller than JSON
+- **Range requests:** PMTiles uses HTTP range requests to fetch only needed tile data
 
 ### Performance
 
-- **Initial load**: ~1-2 MB (only visible tiles)
-- **Zoom/pan**: 10-100 KB per action
-- **Total data**: 133 MB → 20-40 MB
-- **Browser memory**: Minimal, tiles unloaded when off-screen
+- **Initial load:** ~1-2 MB (only visible tiles)
+- **Zoom/pan:** 10-100 KB per action
+- **Total file size:** 133 MB GeoJSON → 20-40 MB PMTiles
+- **No backend:** Served as a static file
 
-## Map Features
+### Assessment Data
 
-- View entire city at once
-- Zoom from city-level to individual parcels
-- Click parcels to see property information
-- Smooth navigation and panning
+Each parcel in the enriched tiles includes:
+- `assessment_change` - Percent change between most recent years
+- `assessment_recent_year` - Most recent assessment year
+- `assessment_recent_total` - Most recent total assessment
+- `assessment_previous_year` - Previous assessment year
+- `assessment_previous_total` - Previous total assessment
+
+Properties without sufficient assessment history have `null` values.
 
 ## Files
 
-- `src/download-parcels.ts` - Download and convert to TopoJSON
+### Scripts
+- `src/download-parcels.ts` - Download parcel GeoJSON from Alexandria GIS
+- `src/generate-assessment-data-sqlite.ts` - Extract assessment changes from database
+- `src/enrich-geojson.ts` - Merge assessment data into GeoJSON
 - `src/generate-tiles.ts` - Generate MBTiles with tippecanoe
 - `src/convert-to-pmtiles.ts` - Convert to PMTiles format
-- `src/extract-tiles.ts` - Extract to individual .pbf files
-- `src/serve-tiles.ts` - Express server for MBTiles
-- `src/viewer.ts` - Static file server
-- `public/index.html` - Viewer for backend server
-- `public/index-pmtiles.html` - Viewer for PMTiles
+- `src/serve.ts` - Local development server
+
+### Data Files
+- `data/alexandria-parcels.geojson` - Raw parcel boundaries and properties
+- `public/assessment-changes.json` - Assessment change data from database
+- `data/alexandria-parcels-enriched.geojson` - Parcels with assessment data
+- `data/alexandria-parcels-enriched.mbtiles` - Vector tiles (intermediate format)
+- `data/alexandria-parcels-enriched.pmtiles` - Final output for deployment
+
+## Troubleshooting
+
+**"tippecanoe is not installed"**
+```bash
+brew install tippecanoe
+```
+
+**"pmtiles CLI is not installed"**
+```bash
+npm install -g pmtiles
+```
+
+**"MBTiles file not found"**
+Run the steps in order - each step depends on the previous one.
+
+**"Database not found"**
+Make sure you've run the scraper and loaded data into the database first (see main README).
