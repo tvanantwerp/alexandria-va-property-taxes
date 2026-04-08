@@ -11,6 +11,7 @@
   "scripts": {
     "scrape": "yarn workspace scraper start",
     "db": "yarn workspace database db",
+    "find-resident": "yarn workspace database find-resident",
     "download-parcels": "yarn workspace mapping download",
     "prep-map-tiles": "yarn workspace mapping prep-map-tiles",
     "serve": "yarn workspace mapping serve"
