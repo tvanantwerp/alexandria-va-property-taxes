@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn tsc:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(yarn workspace database prisma generate:*)",
+      "Bash(npx eslint:*)",
+      "Bash(yarn download-parcels:*)",
+      "Bash(yarn install:*)",
+      "Bash(yarn download:*)",
+      "Bash(yarn generate-tiles)",
+      "Bash(yarn convert-pmtiles:*)",
+      "Bash(yarn viewer:*)",
+      "Bash(yarn generate-assessment-data:*)",
+      "Bash(sqlite3:*)",
+      "Bash(yarn enrich-geojson:*)",
+      "Bash(yarn generate-tiles-enriched:*)",
+      "Bash(yarn convert-pmtiles-enriched:*)",
+      "Bash(ls:*)"
+    ]
+  }
+}

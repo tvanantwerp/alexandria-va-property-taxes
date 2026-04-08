@@ -89,10 +89,10 @@ async function getStudyGroupData(): Promise<string[]> {
   }
 
   salesDB.forEach(sale => {
-    sales += `${sale.streetNumber},${sale.street},${sale.year},${sale.price},${sale.lotSize},${sale.livingArea}\n`;
+    sales += `${sale.streetNumber},${sale.street},${String(sale.year)},${String(sale.price)},${String(sale.lotSize)},${String(sale.livingArea)}\n`;
   });
   assessmentsDB.forEach(assessment => {
-    assessments += `${assessment.streetNumber},${assessment.street},${assessment.year},${assessment.price},${assessment.lotSize},${assessment.livingArea}\n`;
+    assessments += `${assessment.streetNumber},${assessment.street},${String(assessment.year)},${String(assessment.price)},${String(assessment.lotSize)},${String(assessment.livingArea)}\n`;
   });
 
   return [sales, assessments];
@@ -101,18 +101,26 @@ async function getStudyGroupData(): Promise<string[]> {
 async function writeData() {
   const [sales, assessments] = await getStudyGroupData();
 
-  writeFile(
-    resolve(__dirname, '../../../data/sales.csv'),
-    sales,
-    { encoding: 'utf8' },
-    err => console.error(err),
-  );
-  writeFile(
-    resolve(__dirname, '../../../data/assessments.csv'),
-    assessments,
-    { encoding: 'utf8' },
-    err => console.error(err),
-  );
+  if (sales) {
+    writeFile(
+      resolve(__dirname, '../../../data/sales.csv'),
+      sales,
+      { encoding: 'utf8' },
+      err => {
+        if (err) console.error(err);
+      },
+    );
+  }
+  if (assessments) {
+    writeFile(
+      resolve(__dirname, '../../../data/assessments.csv'),
+      assessments,
+      { encoding: 'utf8' },
+      err => {
+        if (err) console.error(err);
+      },
+    );
+  }
 }
 
-writeData();
+void writeData();

@@ -1,0 +1,25 @@
+{
+  "name": "mapping",
+  "version": "0.0.1",
+  "description": "Map Alexandria VA property parcels with assessment data.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "download": "tsx ./src/download-parcels.ts",
+    "generate-assessment-data": "tsx ./src/generate-assessment-data-sqlite.ts",
+    "enrich-geojson": "tsx ./src/enrich-geojson.ts",
+    "generate-tiles": "tsx ./src/generate-tiles.ts",
+    "convert-pmtiles": "tsx ./src/convert-to-pmtiles.ts",
+    "prep-map-tiles": "yarn generate-assessment-data && yarn enrich-geojson && yarn generate-tiles && yarn convert-pmtiles",
+    "serve": "tsx ./src/serve.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "axios": "^1.13.6",
+    "better-sqlite3": "^11.8.1",
+    "tsx": "^4.21.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12"
+  }
+}
